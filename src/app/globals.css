@@ -1,26 +1,151 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  /* Color Palette - 5 colors only */
+  --primary: #0A66C2;        /* LinkedIn Blue - CTAs only */
+  --black: #000000;          /* Primary text */
+  --gray: #666666;           /* Secondary text */
+  --light-gray: #F5F5F5;     /* Backgrounds */
+  --white: #FFFFFF;          /* Cards/base */
+
+  /* Typography System */
+  --font-system: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Inter', sans-serif;
+  
+  /* Font Sizes (Mobile-first) */
+  --text-sm: 14px;           /* Labels, captions */
+  --text-base: 16px;         /* Body text */
+  --text-lg: 18px;           /* Subheadings */
+  --text-xl: 24px;           /* Headings */
+  --text-2xl: 32px;          /* Page title */
+  
+  /* Font Weights (Only 2) */
+  --font-regular: 400;       /* All body text */
+  --font-semibold: 600;      /* Headings, buttons */
+  
+  /* Line Heights */
+  --leading-tight: 1.2;      /* Headings */
+  --leading-normal: 1.5;     /* Body text */
+  
+  /* Spacing (8px base) */
+  --space-xs: 4px;
+  --space-sm: 8px;
+  --space-md: 16px;
+  --space-lg: 24px;
+  --space-xl: 32px;
+  --space-2xl: 48px;
+
+  /* Legacy support for existing components */
+  --background: var(--white);
+  --foreground: var(--black);
+  --card: var(--white);
+  --card-foreground: var(--black);
+  --popover: var(--white);
+  --popover-foreground: var(--black);
+  --primary-foreground: var(--white);
+  --secondary: var(--light-gray);
+  --secondary-foreground: var(--black);
+  --muted: var(--light-gray);
+  --muted-foreground: var(--gray);
+  --accent: var(--light-gray);
+  --accent-foreground: var(--black);
+  --destructive: #ef4444;
+  --destructive-foreground: var(--white);
+  --border: #e2e8f0;
+  --input: #e2e8f0;
+  --ring: var(--primary);
+  --radius: 0.5rem;
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --font-sans: var(--font-system);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
-}
-
+/* Base styles */
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background: var(--white);
+  color: var(--black);
+  font-family: var(--font-system);
+  font-size: var(--text-base);
+  font-weight: var(--font-regular);
+  line-height: var(--leading-normal);
 }
+
+/* Typography classes */
+.text-sm {
+  font-size: var(--text-sm);
+}
+
+.text-base {
+  font-size: var(--text-base);
+}
+
+.text-lg {
+  font-size: var(--text-lg);
+}
+
+.text-xl {
+  font-size: var(--text-xl);
+}
+
+.text-2xl {
+  font-size: var(--text-2xl);
+}
+
+.font-regular {
+  font-weight: var(--font-regular);
+}
+
+.font-semibold {
+  font-weight: var(--font-semibold);
+}
+
+.leading-tight {
+  line-height: var(--leading-tight);
+}
+
+.leading-normal {
+  line-height: var(--leading-normal);
+}
+
+/* Spacing utilities */
+.space-xs { margin: var(--space-xs); }
+.space-sm { margin: var(--space-sm); }
+.space-md { margin: var(--space-md); }
+.space-lg { margin: var(--space-lg); }
+.space-xl { margin: var(--space-xl); }
+.space-2xl { margin: var(--space-2xl); }
+
+.p-xs { padding: var(--space-xs); }
+.p-sm { padding: var(--space-sm); }
+.p-md { padding: var(--space-md); }
+.p-lg { padding: var(--space-lg); }
+.p-xl { padding: var(--space-xl); }
+.p-2xl { padding: var(--space-2xl); }
+
+/* Color utilities */
+.text-primary { color: var(--primary); }
+.text-black { color: var(--black); }
+.text-gray { color: var(--gray); }
+.bg-primary { background-color: var(--primary); }
+.bg-white { background-color: var(--white); }
+.bg-light-gray { background-color: var(--light-gray); }
+.border-gray { border-color: var(--gray); }
