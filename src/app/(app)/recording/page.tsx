@@ -10,16 +10,20 @@ import { Badge } from "@/components/ui/badge"
 import Link from "next/link"
 import { useAuth } from "@/lib/hooks/useAuth"
 import { useRecordings } from "@/lib/hooks/useRecordings"
+import { useSubscription } from "@/lib/hooks/useSubscription"
 import { formatDate, formatDuration } from "@/lib/utils"
 import { Mic, MicOff, Play, Pause, Square, Trash2, Save, Download } from "lucide-react"
 import { toast } from 'sonner'
 import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
 import { MobileBottomNav } from '@/components/layout/MobileBottomNav'
+import { TrialUsageIndicator } from '@/components/subscription/TrialUsageIndicator'
+import { PaywallModal } from '@/components/subscription/PaywallModal'
 
 export default function RecordingPage() {
   const { user, loading: authLoading } = useAuth()
   const { recordings, loading: recordingsLoading, createRecording, deleteRecording } = useRecordings()
+  const { subscription, trialUsage, updateTrialUsage } = useSubscription()
   
   // Recording states
   const [isRecording, setIsRecording] = useState(false)
@@ -33,6 +37,9 @@ export default function RecordingPage() {
   // Form states
   const [title, setTitle] = useState('')
   const [description, setDescription] = useState('')
+  
+  // Subscription states
+  const [showPaywall, setShowPaywall] = useState(false)
   
   // Refs
   const mediaRecorderRef = useRef<MediaRecorder | null>(null)
@@ -103,6 +110,12 @@ export default function RecordingPage() {
 
   // Audio recording functions
   const startRecording = async () => {
+    // Check trial limits
+    if (trialUsage && trialUsage.is_trial && !trialUsage.can_record) {
+      setShowPaywall(true)
+      return
+    }
+
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ 
         audio: {
@@ -140,9 +153,27 @@ export default function RecordingPage() {
       setIsRecording(true)
       setRecordingTime(0)
       
-      // Start timer
+      // Start timer with trial limit checking
       timerRef.current = setInterval(() => {
-        setRecordingTime(prev => prev + 1)
+        setRecordingTime(prev => {
+          const newTime = prev + 1
+          
+          // Check trial limits during recording
+          if (trialUsage && trialUsage.is_trial) {
+            const currentMinutesUsed = newTime / 60 // Convert seconds to minutes with decimal precision
+            const totalMinutesUsed = (trialUsage.minutes_used || 0) + currentMinutesUsed
+            
+            // If we've reached or exceeded the trial limit, stop recording
+            if (totalMinutesUsed >= trialUsage.minutes_limit) {
+              stopRecording()
+              setShowPaywall(true)
+              toast.error('Trial limit reached! Please upgrade to continue recording.')
+              return newTime
+            }
+          }
+          
+          return newTime
+        })
       }, 1000)
       
       // Start audio level monitoring
@@ -276,6 +307,14 @@ export default function RecordingPage() {
       })
 
       console.log('Recording created successfully:', result)
+      
+      // Update trial usage if user is on trial
+      if (trialUsage && trialUsage.is_trial) {
+        const minutesUsed = recordingTime / 60 // Convert seconds to minutes with decimal precision
+        const newTotalMinutes = (trialUsage.minutes_used || 0) + minutesUsed
+        await updateTrialUsage(newTotalMinutes)
+      }
+      
       toast.success('Recording saved successfully!')
       // Redirect to review page
       router.push('/recording/review')
@@ -366,6 +405,9 @@ export default function RecordingPage() {
                 <Link href="/posts" className="text-gray-600 hover:text-gray-900">
                   Posts
                 </Link>
+                <Link href="/pricing" className="text-gray-600 hover:text-gray-900">
+                  Pricing
+                </Link>
                 <Link href="/settings" className="text-gray-600 hover:text-gray-900">
                   Settings
                 </Link>
@@ -394,6 +436,16 @@ export default function RecordingPage() {
           </p>
         </div>
 
+        {/* Trial Usage Indicator */}
+        {trialUsage && trialUsage.is_trial && (
+          <TrialUsageIndicator
+            minutesUsed={trialUsage.minutes_used}
+            minutesLimit={trialUsage.minutes_limit}
+            isTrial={trialUsage.is_trial}
+            canRecord={trialUsage.can_record}
+          />
+        )}
+
         <div className="grid lg:grid-cols-3 gap-4 lg:gap-8">
           {/* Recording Interface */}
           <div className="lg:col-span-1 order-1 lg:order-1">
@@ -410,13 +462,41 @@ export default function RecordingPage() {
               <CardContent className="space-y-6">
                 {/* Recording Timer */}
                 <div className="text-center">
-                  <div className="text-2xl md:text-3xl font-mono font-bold text-[#0A66C2] mb-2">
+                  <div className="text-xl md:text-2xl lg:text-3xl font-mono font-bold text-[#0A66C2] mb-2">
                     {formatTime(recordingTime)}
                   </div>
                   {isRecording && (
                     <div className="text-sm text-indigo-500">
                       {isPaused ? 'Paused' : 'Recording...'}
                     </div>
+                  )}
+                  
+                  {/* Trial Limit Warning */}
+                  {isRecording && trialUsage && trialUsage.is_trial && (
+                    (() => {
+                      const currentMinutesUsed = recordingTime / 60 // Convert seconds to minutes with decimal precision
+                      const totalMinutesUsed = (trialUsage.minutes_used || 0) + currentMinutesUsed
+                      const remainingMinutes = trialUsage.minutes_limit - totalMinutesUsed
+                      
+                      if (remainingMinutes <= 1 && remainingMinutes > 0) {
+                        return (
+                          <div className="mt-2 p-2 bg-yellow-100 border border-yellow-300 rounded-lg">
+                            <div className="flex items-center justify-center space-x-1 text-yellow-800">
+                              <span className="text-sm font-medium">⚠️ Less than 1 minute remaining in trial</span>
+                            </div>
+                          </div>
+                        )
+                      } else if (remainingMinutes <= 0) {
+                        return (
+                          <div className="mt-2 p-2 bg-red-100 border border-red-300 rounded-lg">
+                            <div className="flex items-center justify-center space-x-1 text-red-800">
+                              <span className="text-sm font-medium">🚫 Trial limit reached!</span>
+                            </div>
+                          </div>
+                        )
+                      }
+                      return null
+                    })()
                   )}
                 </div>
 
@@ -612,6 +692,16 @@ export default function RecordingPage() {
 
       {/* Mobile Bottom Navigation */}
       <MobileBottomNav />
+
+      {/* Paywall Modal */}
+      <PaywallModal
+        isOpen={showPaywall}
+        onClose={() => setShowPaywall(false)}
+        onUpgrade={(plan) => {
+          console.log('Upgrading to:', plan)
+          setShowPaywall(false)
+        }}
+      />
     </div>
   )
 }

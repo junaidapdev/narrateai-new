@@ -7,17 +7,21 @@ import Link from "next/link"
 import { useAuth } from "@/lib/hooks/useAuth"
 import { useRecordings } from "@/lib/hooks/useRecordings"
 import { usePosts } from "@/lib/hooks/usePosts"
+import { useSubscription } from "@/lib/hooks/useSubscription"
 import { formatDate } from "@/lib/utils"
 import { Mic, FileText, Plus, Clock, CheckCircle, XCircle } from "lucide-react"
 import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
 import { MobileBottomNav } from '@/components/layout/MobileBottomNav'
+import { SubscriptionStatus } from '@/components/subscription/SubscriptionStatus'
+import { TrialUsageIndicator } from '@/components/subscription/TrialUsageIndicator'
 
 export default function DashboardPage() {
   const { user, loading: authLoading } = useAuth()
   const { recordings, loading: recordingsLoading } = useRecordings()
   const { posts, loading: postsLoading } = usePosts()
+  const { subscription, trialUsage, loading: subscriptionLoading } = useSubscription()
   const router = useRouter()
   const supabase = createClient()
 
@@ -105,6 +109,9 @@ export default function DashboardPage() {
                 <Link href="/posts" className="text-gray-600 hover:text-gray-900">
                   Posts
                 </Link>
+                <Link href="/pricing" className="text-gray-600 hover:text-gray-900">
+                  Pricing
+                </Link>
                 <Link href="/settings" className="text-gray-600 hover:text-gray-900">
                   Settings
                 </Link>
@@ -125,13 +132,35 @@ export default function DashboardPage() {
       {/* Main Content */}
       <main className="container mx-auto px-4 py-8">
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">
+          <h1 className="text-2xl md:text-3xl font-bold text-gray-900 mb-2">
             Welcome back!
           </h1>
           <p className="text-gray-600">
             Here's what's happening with your content today.
           </p>
         </div>
+
+        {/* Trial Usage Indicator */}
+        {trialUsage && trialUsage.is_trial && (
+          <TrialUsageIndicator
+            minutesUsed={trialUsage.minutes_used}
+            minutesLimit={trialUsage.minutes_limit}
+            isTrial={trialUsage.is_trial}
+            canRecord={trialUsage.can_record}
+          />
+        )}
+
+        {/* Subscription Status */}
+        {subscription && (
+          <div className="mb-8">
+            <SubscriptionStatus
+              subscriptionStatus={subscription.subscription_status}
+              subscriptionPlan={subscription.subscription_plan}
+              subscriptionEndDate={subscription.subscription_end_date}
+              isTrial={trialUsage?.is_trial || false}
+            />
+          </div>
+        )}
 
         {/* Stats Cards */}
         <div className="grid md:grid-cols-4 gap-6 mb-8">

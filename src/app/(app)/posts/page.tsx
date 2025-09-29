@@ -207,6 +207,9 @@ export default function PostsPage() {
                 <Link href="/posts" className="text-[#0A66C2] font-medium">
                   Posts
                 </Link>
+                <Link href="/pricing" className="text-gray-600 hover:text-gray-900">
+                  Pricing
+                </Link>
                 <Link href="/settings" className="text-gray-600 hover:text-gray-900">
                   Settings
                 </Link>

@@ -50,8 +50,15 @@ export default function SignUpPage() {
       }
 
       if (data.user) {
-        setSuccess(true)
-        toast.success('Check your email for the confirmation link!')
+        // If email confirmation is disabled, user is automatically signed in
+        if (data.session) {
+          toast.success('Account created successfully!')
+          router.push('/dashboard')
+        } else {
+          // If email confirmation is enabled, show the email confirmation page
+          setSuccess(true)
+          toast.success('Check your email for the confirmation link!')
+        }
       }
     } catch (error) {
       console.error('Unexpected error:', error)

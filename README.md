@@ -59,6 +59,8 @@ OPENAI_API_KEY=your_openai_api_key
 ASSEMBLYAI_API_KEY=your_assemblyai_api_key
 LEMONSQUEEZY_WEBHOOK_SECRET=your_lemonsqueezy_webhook_secret
 LEMONSQUEEZY_API_KEY=your_lemonsqueezy_api_key
+NEXT_PUBLIC_LEMONSQUEEZY_MONTHLY_URL=https://your-store.lemonsqueezy.com/checkout/buy/your-monthly-product-id
+NEXT_PUBLIC_LEMONSQUEEZY_YEARLY_URL=https://your-store.lemonsqueezy.com/checkout/buy/your-yearly-product-id
 NEXT_PUBLIC_APP_URL=http://localhost:3000
 ```
 

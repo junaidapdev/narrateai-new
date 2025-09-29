@@ -1,15 +1,43 @@
+'use client'
+
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
+import { useAuth } from "@/lib/hooks/useAuth"
+import { useRouter } from "next/navigation"
+import { useEffect } from "react"
 
 export default function Home() {
+  const { user, loading } = useAuth()
+  const router = useRouter()
+
+  useEffect(() => {
+    if (!loading && user) {
+      router.push('/dashboard')
+    }
+  }, [user, loading, router])
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-white flex items-center justify-center">
+        <div className="text-center">
+          <div className="text-2xl font-semibold text-black mb-4">Narrate AI</div>
+          <div className="text-gray-600">Loading...</div>
+        </div>
+      </div>
+    )
+  }
+
+  if (user) {
+    return null // Will redirect to dashboard
+  }
   return (
     <div className="min-h-screen bg-white">
       {/* Header */}
       <header className="max-w-7xl mx-auto px-6 py-8">
         <nav className="flex items-center justify-between">
-          <div className="text-2xl font-semibold text-black">
+          <Link href="/" className="text-2xl font-semibold text-black">
             Narrate AI
-          </div>
+          </Link>
           <div className="flex items-center space-x-6">
             <Link href="/signin" className="text-gray-600 hover:text-black transition-colors duration-200">
               Sign In

@@ -46,12 +46,20 @@ export interface Post {
 export interface Subscription {
   id: string
   user_id: string
-  status: 'active' | 'canceled' | 'past_due' | 'unpaid'
-  plan: 'free' | 'pro' | 'enterprise'
-  current_period_start: string
-  current_period_end: string
+  subscription_status: 'trial' | 'active' | 'cancelled' | 'expired'
+  subscription_id?: string
+  trial_minutes_used: number
+  subscription_plan?: 'monthly' | 'yearly'
+  subscription_end_date?: string
   created_at: string
   updated_at: string
+}
+
+export interface TrialUsage {
+  minutes_used: number
+  minutes_limit: number
+  is_trial: boolean
+  can_record: boolean
 }
 
 // API Response types
