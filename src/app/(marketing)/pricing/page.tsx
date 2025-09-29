@@ -9,10 +9,10 @@ import { useAuth } from "@/lib/hooks/useAuth"
 import { useSubscription } from "@/lib/hooks/useSubscription"
 import { Crown, Check } from "lucide-react"
 import { useSearchParams, useRouter } from "next/navigation"
-import { useEffect } from "react"
+import { useEffect, Suspense } from "react"
 import { toast } from "sonner"
 
-export default function PricingPage() {
+function PricingContent() {
   const { user, loading: authLoading } = useAuth()
   const { subscription, trialUsage, refetch } = useSubscription()
   const searchParams = useSearchParams()
@@ -279,6 +279,21 @@ export default function PricingPage() {
         </div>
       </footer>
     </div>
+  )
+}
+
+export default function PricingPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#0A66C2] mx-auto"></div>
+          <p className="mt-4 text-gray-600">Loading...</p>
+        </div>
+      </div>
+    }>
+      <PricingContent />
+    </Suspense>
   )
 }
 
