@@ -11,15 +11,16 @@ import Link from "next/link"
 import { useAuth } from "@/lib/hooks/useAuth"
 import { useSubscription } from "@/lib/hooks/useSubscription"
 import { getInitials } from "@/lib/utils"
-import { User, Settings, CreditCard, Bell, Shield } from "lucide-react"
+import { User, Settings, CreditCard, Bell, Shield, LogOut, Mail, Lock, Smartphone, Trash2 } from "lucide-react"
 import { toast } from 'sonner'
 import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
 import { MobileBottomNav } from '@/components/layout/MobileBottomNav'
+import { DashboardHeader } from '@/components/dashboard-header'
 
 export default function SettingsPage() {
   const { user, loading: authLoading } = useAuth()
-  const { subscription, loading: subscriptionLoading, isPro, isEnterprise } = useSubscription()
+  const { subscription, loading: subscriptionLoading } = useSubscription()
   const [fullName, setFullName] = useState(user?.user_metadata?.full_name || '')
   const [email, setEmail] = useState(user?.email || '')
   const [isUpdating, setIsUpdating] = useState(false)
@@ -38,10 +39,10 @@ export default function SettingsPage() {
 
   if (authLoading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#0A66C2] mx-auto"></div>
-          <p className="mt-4 text-gray-600">Loading...</p>
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
+          <p className="mt-4 text-muted-foreground">Loading...</p>
         </div>
       </div>
     )
@@ -49,10 +50,10 @@ export default function SettingsPage() {
 
   if (!user) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="text-center">
-          <h1 className="text-2xl font-bold text-gray-900 mb-4">Access Denied</h1>
-          <p className="text-gray-600 mb-6">You need to be signed in to access this page.</p>
+          <h1 className="text-2xl font-bold text-foreground mb-4">Access Denied</h1>
+          <p className="text-muted-foreground mb-6">You need to be signed in to access this page.</p>
           <Link href="/signin">
             <Button>Sign In</Button>
           </Link>
@@ -74,195 +75,249 @@ export default function SettingsPage() {
   }
 
   const getPlanBadge = () => {
-    if (isEnterprise()) {
-      return <Badge className="bg-purple-100 text-purple-800">Enterprise</Badge>
+    if (subscription?.subscription_status === 'active') {
+      if (subscription?.subscription_plan === 'enterprise') {
+        return <Badge className="bg-purple-100 text-purple-800">Enterprise</Badge>
+      }
+      if (subscription?.subscription_plan === 'yearly') {
+        return <Badge className="bg-blue-100 text-blue-800">Pro Yearly</Badge>
+      }
+      if (subscription?.subscription_plan === 'monthly') {
+        return <Badge className="bg-blue-100 text-blue-800">Pro Monthly</Badge>
+      }
+      return <Badge className="bg-green-100 text-green-800">Pro</Badge>
     }
-    if (isPro()) {
-      return <Badge className="bg-blue-100 text-blue-800">Pro</Badge>
-    }
-    return <Badge className="bg-gray-100 text-gray-800">Free</Badge>
+    return <Badge className="bg-gray-100 text-gray-800">Trial</Badge>
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 pb-16 md:pb-0">
-      {/* Header */}
-      <header className="bg-white shadow-sm border-b">
-        <div className="container mx-auto px-4 py-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-4">
-              <Link href="/" className="text-2xl font-bold text-[#0A66C2]">
-                Narrate AI
-              </Link>
-              <nav className="hidden md:flex space-x-6">
-                <Link href="/dashboard" className="text-gray-600 hover:text-gray-900">
-                  Dashboard
-                </Link>
-                <Link href="/recording" className="text-gray-600 hover:text-gray-900">
-                  Recordings
-                </Link>
-                <Link href="/posts" className="text-gray-600 hover:text-gray-900">
-                  Posts
-                </Link>
-                <Link href="/settings" className="text-[#0A66C2] font-medium">
-                  Settings
-                </Link>
-              </nav>
-            </div>
-            <div className="flex items-center space-x-4">
-              <span className="text-sm text-gray-600">
-                {user.user_metadata?.full_name || user.email}
-              </span>
-              <Button className="bg-[#0A66C2] hover:bg-[#0A66C2]/90 text-white text-sm px-3 py-1.5" onClick={handleSignOut}>
-                Sign Out
-              </Button>
-            </div>
-          </div>
-        </div>
-      </header>
+    <div className="min-h-screen bg-background pb-16 md:pb-0">
+      <DashboardHeader />
 
       {/* Main Content */}
-      <main className="container mx-auto px-4 py-8">
+      <main className="mx-auto max-w-7xl px-6 py-12 md:px-8 lg:px-12">
         <div className="mb-8">
-          <h1 className="text-2xl md:text-3xl font-bold text-gray-900 mb-2">
+          <h1 className="text-3xl font-serif font-bold tracking-tight text-foreground mb-2">
             Settings
           </h1>
-          <p className="text-gray-600">
+          <p className="text-muted-foreground">
             Manage your account settings and preferences.
           </p>
         </div>
 
         <div className="grid lg:grid-cols-3 gap-8">
           {/* Profile Settings */}
-          <div className="lg:col-span-2 space-y-6">
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center">
-                  <User className="h-5 w-5 mr-2" />
+          <div className="lg:col-span-2 space-y-8">
+            {/* Profile Information */}
+            <Card className="bg-white border border-border shadow-sm">
+              <CardHeader className="pb-6">
+                <CardTitle className="flex items-center text-xl font-serif font-semibold text-foreground">
+                  <User className="h-5 w-5 mr-3 text-primary" />
                   Profile Information
                 </CardTitle>
-                <CardDescription>
-                  Update your personal information
+                <CardDescription className="text-muted-foreground">
+                  Update your personal information and profile details
                 </CardDescription>
               </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="flex items-center space-x-4">
-                  <Avatar className="h-16 w-16">
+              <CardContent className="space-y-6">
+                <div className="flex items-center space-x-6">
+                  <Avatar className="h-20 w-20 border-2 border-border">
                     <AvatarImage src={user.user_metadata?.avatar_url} />
-                    <AvatarFallback>
+                    <AvatarFallback className="text-lg font-semibold bg-primary/10 text-primary">
                       {getInitials(user.user_metadata?.full_name || user.email || '')}
                     </AvatarFallback>
                   </Avatar>
-                  <div>
-                    <p className="font-medium">{user.user_metadata?.full_name || 'No name set'}</p>
-                    <p className="text-sm text-gray-600">{user.email}</p>
-                    {getPlanBadge()}
+                  <div className="flex-1">
+                    <div className="flex items-center gap-3 mb-2">
+                      <p className="text-lg font-semibold text-foreground">{user.user_metadata?.full_name || 'No name set'}</p>
+                      {getPlanBadge()}
+                    </div>
+                    <p className="text-muted-foreground flex items-center gap-2">
+                      <Mail className="h-4 w-4" />
+                      {user.email}
+                    </p>
                   </div>
                 </div>
-                <div className="grid md:grid-cols-2 gap-4">
-                  <div>
-                    <Label htmlFor="full-name">Full Name</Label>
+                
+                <div className="grid md:grid-cols-2 gap-6">
+                  <div className="space-y-2">
+                    <Label htmlFor="full-name" className="text-sm font-medium text-foreground">Full Name</Label>
                     <Input
                       id="full-name"
                       value={fullName}
                       onChange={(e) => setFullName(e.target.value)}
-                      className="mt-1"
+                      className="bg-background border-border focus:border-primary focus:ring-primary/20"
+                      placeholder="Enter your full name"
                     />
                   </div>
-                  <div>
-                    <Label htmlFor="email">Email</Label>
+                  <div className="space-y-2">
+                    <Label htmlFor="email" className="text-sm font-medium text-foreground">Email</Label>
                     <Input
                       id="email"
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
                       disabled
-                      className="mt-1"
+                      className="bg-muted border-border text-muted-foreground"
                     />
-                    <p className="text-xs text-gray-500 mt-1">
+                    <p className="text-xs text-muted-foreground">
                       Email cannot be changed
                     </p>
                   </div>
                 </div>
-                <Button onClick={handleUpdateProfile} disabled={isUpdating} className="bg-[#0A66C2] hover:bg-[#0A66C2]/90 text-white">
-                  {isUpdating ? 'Updating...' : 'Update Profile'}
-                </Button>
+                
+                <div className="flex gap-3">
+                  <Button 
+                    onClick={handleUpdateProfile} 
+                    disabled={isUpdating} 
+                    className="bg-primary hover:bg-primary/90 text-primary-foreground"
+                  >
+                    {isUpdating ? 'Updating...' : 'Update Profile'}
+                  </Button>
+                </div>
               </CardContent>
             </Card>
 
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center">
-                  <Shield className="h-5 w-5 mr-2" />
+            {/* Security Settings */}
+            <Card className="bg-white border border-border shadow-sm">
+              <CardHeader className="pb-6">
+                <CardTitle className="flex items-center text-xl font-serif font-semibold text-foreground">
+                  <Shield className="h-5 w-5 mr-3 text-primary" />
                   Security
                 </CardTitle>
-                <CardDescription>
-                  Manage your account security
+                <CardDescription className="text-muted-foreground">
+                  Manage your account security and authentication
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between p-4 bg-muted/50 rounded-lg border border-border">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 bg-primary/10 rounded-lg flex items-center justify-center">
+                        <Lock className="h-5 w-5 text-primary" />
+                      </div>
+                      <div>
+                        <p className="font-medium text-foreground">Password</p>
+                        <p className="text-sm text-muted-foreground">Last updated 30 days ago</p>
+                      </div>
+                    </div>
+                    <Button variant="outline" className="border-border hover:bg-muted">
+                      Change Password
+                    </Button>
+                  </div>
+                  
+                  <div className="flex items-center justify-between p-4 bg-muted/50 rounded-lg border border-border">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 bg-primary/10 rounded-lg flex items-center justify-center">
+                        <Smartphone className="h-5 w-5 text-primary" />
+                      </div>
+                      <div>
+                        <p className="font-medium text-foreground">Two-Factor Authentication</p>
+                        <p className="text-sm text-muted-foreground">Add an extra layer of security</p>
+                      </div>
+                    </div>
+                    <Button variant="outline" className="border-border hover:bg-muted">
+                      Enable 2FA
+                    </Button>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Account Actions */}
+            <Card className="bg-white border border-border shadow-sm">
+              <CardHeader className="pb-6">
+                <CardTitle className="flex items-center text-xl font-serif font-semibold text-foreground">
+                  <Settings className="h-5 w-5 mr-3 text-primary" />
+                  Account Actions
+                </CardTitle>
+                <CardDescription className="text-muted-foreground">
+                  Manage your account and data
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="font-medium">Password</p>
-                    <p className="text-sm text-gray-600">Last updated 30 days ago</p>
+                <div className="flex items-center justify-between p-4 bg-red-50 rounded-lg border border-red-200">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 bg-red-100 rounded-lg flex items-center justify-center">
+                      <LogOut className="h-5 w-5 text-red-600" />
+                    </div>
+                    <div>
+                      <p className="font-medium text-red-900">Sign Out</p>
+                      <p className="text-sm text-red-600">Sign out of your account</p>
+                    </div>
                   </div>
-                  <Button className="bg-[#0A66C2] hover:bg-[#0A66C2]/90 text-white text-sm px-3 py-1.5">
-                    Change Password
+                  <Button 
+                    variant="outline" 
+                    onClick={handleSignOut}
+                    className="border-red-200 text-red-600 hover:bg-red-50"
+                  >
+                    Sign Out
                   </Button>
                 </div>
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="font-medium">Two-Factor Authentication</p>
-                    <p className="text-sm text-gray-600">Add an extra layer of security</p>
+                
+                <div className="flex items-center justify-between p-4 bg-red-50 rounded-lg border border-red-200">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 bg-red-100 rounded-lg flex items-center justify-center">
+                      <Trash2 className="h-5 w-5 text-red-600" />
+                    </div>
+                    <div>
+                      <p className="font-medium text-red-900">Delete Account</p>
+                      <p className="text-sm text-red-600">Permanently delete your account and data</p>
+                    </div>
                   </div>
-                  <Button className="bg-[#0A66C2] hover:bg-[#0A66C2]/90 text-white text-sm px-3 py-1.5">
-                    Enable 2FA
+                  <Button 
+                    variant="outline" 
+                    className="border-red-200 text-red-600 hover:bg-red-50"
+                  >
+                    Delete Account
                   </Button>
                 </div>
               </CardContent>
             </Card>
           </div>
 
-          {/* Subscription Info */}
-          <div className="space-y-6">
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center">
-                  <CreditCard className="h-5 w-5 mr-2" />
+          {/* Sidebar */}
+          <div className="space-y-8">
+            {/* Subscription Info */}
+            <Card className="bg-white border border-border shadow-sm">
+              <CardHeader className="pb-6">
+                <CardTitle className="flex items-center text-xl font-serif font-semibold text-foreground">
+                  <CreditCard className="h-5 w-5 mr-3 text-primary" />
                   Subscription
                 </CardTitle>
-                <CardDescription>
-                  Manage your subscription
+                <CardDescription className="text-muted-foreground">
+                  Manage your subscription and billing
                 </CardDescription>
               </CardHeader>
               <CardContent>
                 {subscriptionLoading ? (
-                  <div className="text-center py-4">
-                    <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-[#0A66C2] mx-auto"></div>
-                    <p className="mt-2 text-sm text-gray-600">Loading...</p>
+                  <div className="text-center py-6">
+                    <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary mx-auto"></div>
+                    <p className="mt-2 text-sm text-muted-foreground">Loading...</p>
                   </div>
                 ) : subscription ? (
-                  <div className="space-y-4">
+                  <div className="space-y-6">
                     <div className="flex items-center justify-between">
-                      <span className="text-sm font-medium">Current Plan</span>
+                      <span className="text-sm font-medium text-foreground">Current Plan</span>
                       {getPlanBadge()}
                     </div>
-                    <div className="text-sm text-gray-600">
-                      <p>Status: {subscription.status}</p>
-                      <p>Next billing: {new Date(subscription.current_period_end).toLocaleDateString()}</p>
+                    <div className="space-y-2 text-sm text-muted-foreground">
+                      <p>Status: <span className="font-medium text-foreground">{subscription.status}</span></p>
+                      <p>Next billing: <span className="font-medium text-foreground">{new Date(subscription.current_period_end).toLocaleDateString()}</span></p>
                     </div>
-                    <div className="space-y-2">
-                      <Button className="w-full bg-[#0A66C2] hover:bg-[#0A66C2]/90 text-white">
+                    <div className="space-y-3">
+                      <Button className="w-full bg-primary hover:bg-primary/90 text-primary-foreground">
                         Upgrade Plan
                       </Button>
-                      <Button className="w-full bg-gray-600 hover:bg-gray-700 text-white">
+                      <Button variant="outline" className="w-full border-border hover:bg-muted">
                         Billing Settings
                       </Button>
                     </div>
                   </div>
                 ) : (
-                  <div className="text-center py-4">
-                    <p className="text-sm text-gray-600 mb-4">No active subscription</p>
+                  <div className="text-center py-6">
+                    <p className="text-sm text-muted-foreground mb-4">No active subscription</p>
                     <Link href="/pricing">
-                      <Button className="w-full bg-[#0A66C2] hover:bg-[#0A66C2]/90 text-white">
+                      <Button className="w-full bg-primary hover:bg-primary/90 text-primary-foreground">
                         View Plans
                       </Button>
                     </Link>
@@ -271,32 +326,33 @@ export default function SettingsPage() {
               </CardContent>
             </Card>
 
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center">
-                  <Bell className="h-5 w-5 mr-2" />
+            {/* Notifications */}
+            <Card className="bg-white border border-border shadow-sm">
+              <CardHeader className="pb-6">
+                <CardTitle className="flex items-center text-xl font-serif font-semibold text-foreground">
+                  <Bell className="h-5 w-5 mr-3 text-primary" />
                   Notifications
                 </CardTitle>
-                <CardDescription>
+                <CardDescription className="text-muted-foreground">
                   Manage your notification preferences
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
-                <div className="flex items-center justify-between">
+                <div className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
                   <div>
-                    <p className="font-medium">Email Notifications</p>
-                    <p className="text-sm text-gray-600">Receive updates via email</p>
+                    <p className="font-medium text-foreground">Email Notifications</p>
+                    <p className="text-sm text-muted-foreground">Receive updates via email</p>
                   </div>
-                  <Button className="bg-[#0A66C2] hover:bg-[#0A66C2]/90 text-white text-sm px-3 py-1.5">
+                  <Button variant="outline" size="sm" className="border-border hover:bg-muted">
                     Configure
                   </Button>
                 </div>
-                <div className="flex items-center justify-between">
+                <div className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
                   <div>
-                    <p className="font-medium">Recording Updates</p>
-                    <p className="text-sm text-gray-600">Get notified when recordings are processed</p>
+                    <p className="font-medium text-foreground">Recording Updates</p>
+                    <p className="text-sm text-muted-foreground">Get notified when recordings are processed</p>
                   </div>
-                  <Button className="bg-[#0A66C2] hover:bg-[#0A66C2]/90 text-white text-sm px-3 py-1.5">
+                  <Button variant="outline" size="sm" className="border-border hover:bg-muted">
                     Configure
                   </Button>
                 </div>
@@ -311,4 +367,3 @@ export default function SettingsPage() {
     </div>
   )
 }
-

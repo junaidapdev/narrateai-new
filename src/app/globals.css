@@ -1,30 +1,67 @@
 @import "tailwindcss";
+@import "tw-animate-css";
+
+@custom-variant dark (&:is(.dark *));
 
 :root {
-  /* Color Palette - 5 colors only */
-  --primary: #0A66C2;        /* LinkedIn Blue - CTAs only */
-  --black: #000000;          /* Primary text */
-  --gray: #666666;           /* Secondary text */
-  --light-gray: #F5F5F5;     /* Backgrounds */
-  --white: #FFFFFF;          /* Cards/base */
+  /* Sophisticated color palette using OKLCH (Light mode only) */
+  --background: oklch(0.985 0.002 85);
+  --foreground: oklch(0.25 0.01 85);
+  --card: oklch(0.99 0.001 85);
+  --card-foreground: oklch(0.25 0.01 85);
+  --popover: oklch(0.99 0.001 85);
+  --popover-foreground: oklch(0.25 0.01 85);
+  --primary: oklch(0.28 0.015 85);
+  --primary-foreground: oklch(0.99 0.001 85);
+  --secondary: oklch(0.45 0.02 85);
+  --secondary-foreground: oklch(0.99 0.001 85);
+  --muted: oklch(0.94 0.003 85);
+  --muted-foreground: oklch(0.55 0.01 85);
+  --accent: oklch(0.92 0.004 85);
+  --accent-foreground: oklch(0.28 0.015 85);
+  --destructive: oklch(0.577 0.245 27.325);
+  --destructive-foreground: oklch(0.99 0.001 85);
+  --border: oklch(0.9 0.003 85);
+  --input: oklch(0.9 0.003 85);
+  --ring: oklch(0.28 0.015 85);
+  --chart-1: oklch(0.646 0.222 41.116);
+  --chart-2: oklch(0.6 0.118 184.704);
+  --chart-3: oklch(0.398 0.07 227.392);
+  --chart-4: oklch(0.828 0.189 84.429);
+  --chart-5: oklch(0.769 0.188 70.08);
+  --radius: 1rem;
+  --sidebar: oklch(0.985 0.002 85);
+  --sidebar-foreground: oklch(0.25 0.01 85);
+  --sidebar-primary: oklch(0.28 0.015 85);
+  --sidebar-primary-foreground: oklch(0.99 0.001 85);
+  --sidebar-accent: oklch(0.92 0.004 85);
+  --sidebar-accent-foreground: oklch(0.28 0.015 85);
+  --sidebar-border: oklch(0.9 0.003 85);
+  --sidebar-ring: oklch(0.28 0.015 85);
+
+  /* Legacy color mappings for backward compatibility */
+  --black: oklch(0.25 0.01 85);
+  --gray: oklch(0.55 0.01 85);
+  --light-gray: oklch(0.94 0.003 85);
+  --white: oklch(0.99 0.001 85);
 
   /* Typography System */
   --font-system: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Inter', sans-serif;
   
   /* Font Sizes (Mobile-first) */
-  --text-sm: 14px;           /* Labels, captions */
-  --text-base: 16px;         /* Body text */
-  --text-lg: 18px;           /* Subheadings */
-  --text-xl: 24px;           /* Headings */
-  --text-2xl: 32px;          /* Page title */
+  --text-sm: 14px;
+  --text-base: 16px;
+  --text-lg: 18px;
+  --text-xl: 24px;
+  --text-2xl: 32px;
   
-  /* Font Weights (Only 2) */
-  --font-regular: 400;       /* All body text */
-  --font-semibold: 600;      /* Headings, buttons */
+  /* Font Weights */
+  --font-regular: 400;
+  --font-semibold: 600;
   
   /* Line Heights */
-  --leading-tight: 1.2;      /* Headings */
-  --leading-normal: 1.5;     /* Body text */
+  --leading-tight: 1.2;
+  --leading-normal: 1.5;
   
   /* Spacing (8px base) */
   --space-xs: 4px;
@@ -33,30 +70,12 @@
   --space-lg: 24px;
   --space-xl: 32px;
   --space-2xl: 48px;
-
-  /* Legacy support for existing components */
-  --background: var(--white);
-  --foreground: var(--black);
-  --card: var(--white);
-  --card-foreground: var(--black);
-  --popover: var(--white);
-  --popover-foreground: var(--black);
-  --primary-foreground: var(--white);
-  --secondary: var(--light-gray);
-  --secondary-foreground: var(--black);
-  --muted: var(--light-gray);
-  --muted-foreground: var(--gray);
-  --accent: var(--light-gray);
-  --accent-foreground: var(--black);
-  --destructive: #ef4444;
-  --destructive-foreground: var(--white);
-  --border: #e2e8f0;
-  --input: #e2e8f0;
-  --ring: var(--primary);
-  --radius: 0.5rem;
 }
 
 @theme inline {
+  --font-sans: var(--font-sans);
+  --font-mono: var(--font-geist-mono);
+  --font-serif: var(--font-fraunces);
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --color-card: var(--card);
@@ -76,20 +95,97 @@
   --color-border: var(--border);
   --color-input: var(--input);
   --color-ring: var(--ring);
-  --font-sans: var(--font-system);
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring: var(--sidebar-ring);
 }
 
-/* Base styles */
-body {
-  background: var(--white);
-  color: var(--black);
-  font-family: var(--font-system);
-  font-size: var(--text-base);
-  font-weight: var(--font-regular);
-  line-height: var(--leading-normal);
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground;
+    font-family: var(--font-system);
+    font-size: var(--text-base);
+    font-weight: var(--font-regular);
+    line-height: var(--leading-normal);
+  }
 }
 
-/* Typography classes */
+/* Custom animations for smooth interactions */
+@keyframes pulse-subtle {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.8;
+  }
+}
+
+@keyframes scale-in {
+  0% {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes fade-in {
+  0% {
+    opacity: 0;
+  }
+  100% {
+    opacity: 1;
+  }
+}
+
+@keyframes slide-up {
+  0% {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-pulse-subtle {
+  animation: pulse-subtle 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+.animate-scale-in {
+  animation: scale-in 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.animate-fade-in {
+  animation: fade-in 0.4s ease-out;
+}
+
+.animate-slide-up {
+  animation: slide-up 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* Typography utility classes */
 .text-sm {
   font-size: var(--text-sm);
 }
@@ -141,7 +237,7 @@ body {
 .p-xl { padding: var(--space-xl); }
 .p-2xl { padding: var(--space-2xl); }
 
-/* Color utilities */
+/* Legacy color utilities for backward compatibility */
 .text-primary { color: var(--primary); }
 .text-black { color: var(--black); }
 .text-gray { color: var(--gray); }
@@ -149,3 +245,8 @@ body {
 .bg-white { background-color: var(--white); }
 .bg-light-gray { background-color: var(--light-gray); }
 .border-gray { border-color: var(--gray); }
+
+/* Smooth transitions */
+* {
+  transition: color 0.2s ease, background-color 0.2s ease, border-color 0.2s ease;
+}

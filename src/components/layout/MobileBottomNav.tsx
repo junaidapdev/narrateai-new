@@ -31,7 +31,7 @@ export function MobileBottomNav() {
   ]
 
   return (
-    <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 md:hidden z-50">
+    <div className="fixed bottom-0 left-0 right-0 bg-background/80 backdrop-blur-sm border-t border-border/40 md:hidden z-50">
       <div className="flex">
         {navItems.map((item) => {
           const isActive = pathname === item.href
@@ -41,10 +41,10 @@ export function MobileBottomNav() {
             <Link
               key={item.href}
               href={item.href}
-              className={`flex-1 flex flex-col items-center justify-center py-2 px-1 ${
+              className={`flex-1 flex flex-col items-center justify-center py-3 px-1 ${
                 isActive 
                   ? 'text-primary' 
-                  : 'text-gray-600'
+                  : 'text-muted-foreground'
               }`}
             >
               <Icon className="h-5 w-5 mb-1" />

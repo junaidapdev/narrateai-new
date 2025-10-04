@@ -14,6 +14,8 @@ import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
 import { TranscriptionService } from '@/lib/services/transcription'
 import { ContentGenerationService } from '@/lib/services/contentGeneration'
+import { DashboardHeader } from '@/components/dashboard-header'
+import { MobileBottomNav } from '@/components/layout/MobileBottomNav'
 
 export default function ProcessingPage() {
   const { user, loading: authLoading } = useAuth()
@@ -115,10 +117,10 @@ export default function ProcessingPage() {
 
   if (authLoading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600 mx-auto"></div>
-          <p className="mt-4 text-gray-600">Loading...</p>
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
+          <p className="mt-4 text-muted-foreground">Loading...</p>
         </div>
       </div>
     )
@@ -126,10 +128,10 @@ export default function ProcessingPage() {
 
   if (!user) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="text-center">
-          <h1 className="text-2xl font-bold text-gray-900 mb-4">Access Denied</h1>
-          <p className="text-gray-600 mb-6">You need to be signed in to access this page.</p>
+          <h1 className="text-2xl font-bold text-foreground mb-4">Access Denied</h1>
+          <p className="text-muted-foreground mb-6">You need to be signed in to access this page.</p>
           <Link href="/signin">
             <Button>Sign In</Button>
           </Link>
@@ -141,10 +143,10 @@ export default function ProcessingPage() {
   // Show loading while recordings are being fetched
   if (recordingsLoading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600 mx-auto"></div>
-          <p className="mt-4 text-gray-600">Loading recording...</p>
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
+          <p className="mt-4 text-muted-foreground">Loading recording...</p>
         </div>
       </div>
     )
@@ -152,12 +154,12 @@ export default function ProcessingPage() {
 
   if (!currentRecording) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="text-center">
-          <h1 className="text-2xl font-bold text-gray-900 mb-4">No Recording Found</h1>
-          <p className="text-gray-600 mb-6">Please record something first.</p>
+          <h1 className="text-2xl font-bold text-foreground mb-4">No Recording Found</h1>
+          <p className="text-muted-foreground mb-6">Please record something first.</p>
           <Link href="/recording">
-            <Button className="bg-indigo-600 hover:bg-indigo-700 text-white">
+            <Button className="bg-primary hover:bg-primary/90 text-primary-foreground">
               Back to Recording
             </Button>
           </Link>
@@ -171,126 +173,122 @@ export default function ProcessingPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <header className="bg-white shadow-sm border-b">
-        <div className="container mx-auto px-4 py-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-4">
-              <Link href="/" className="text-2xl font-bold text-indigo-600">
-                Narrate AI
-              </Link>
-              <nav className="hidden md:flex space-x-6">
-                <Link href="/dashboard" className="text-gray-600 hover:text-gray-900">
-                  Dashboard
-                </Link>
-                <Link href="/recording" className="text-gray-600 hover:text-gray-900">
-                  Recordings
-                </Link>
-                <Link href="/posts" className="text-indigo-600 font-medium">
-                  Posts
-                </Link>
-                <Link href="/settings" className="text-gray-600 hover:text-gray-900">
-                  Settings
-                </Link>
-              </nav>
-            </div>
-            <div className="flex items-center space-x-4">
-              <span className="text-sm text-gray-600">
-                {user.user_metadata?.full_name || user.email}
-              </span>
-            </div>
-          </div>
-        </div>
-      </header>
+    <div className="min-h-screen bg-background pb-16 md:pb-0">
+      <DashboardHeader />
 
       {/* Main Content */}
-      <main className="container mx-auto px-4 py-8">
-        <div className="mb-8">
-          <h1 className="text-2xl md:text-3xl font-bold text-gray-900 mb-2">
+      <main className="mx-auto max-w-7xl px-6 py-12 md:px-8 lg:px-12">
+        {/* Main Title and Subtitle */}
+        <div className="text-center mb-12">
+          <h1 className="text-3xl font-serif font-bold tracking-tight text-foreground md:text-4xl mb-4">
             Processing Your Recording
           </h1>
-          <p className="text-gray-600">
+          <p className="text-lg text-muted-foreground">
             We're transcribing your audio and generating your post content.
           </p>
         </div>
 
-        <div className="max-w-4xl mx-auto">
-          {/* Processing Steps */}
-          <div className="grid md:grid-cols-2 gap-8 mb-8">
-            {steps.map((step, index) => (
-              <Card 
-                key={step.id} 
-                className={`${
-                  processingStep >= step.id 
-                    ? 'border-green-200 bg-green-50' 
-                    : 'border-gray-200'
-                }`}
-              >
-                <CardHeader>
-                  <CardTitle className="flex items-center">
-                    {processingStep > step.id ? (
-                      <CheckCircle className="h-5 w-5 mr-2 text-green-600" />
-                    ) : processingStep === step.id ? (
-                      <Loader2 className="h-5 w-5 mr-2 text-indigo-600 animate-spin" />
-                    ) : (
-                      <div className="h-5 w-5 mr-2 bg-gray-300 rounded-full" />
-                    )}
-                    {step.title}
-                  </CardTitle>
-                  <CardDescription>{step.description}</CardDescription>
-                </CardHeader>
-              </Card>
-            ))}
+        <div className="max-w-6xl mx-auto">
+          {/* Processing Status - Single Card */}
+          <div className="max-w-md mx-auto mb-12">
+            <div className="bg-white rounded-xl border border-border shadow-sm p-8 text-center">
+              {/* Progress Indicator */}
+              <div className="flex justify-center mb-6">
+                {processingStep >= steps.length - 1 ? (
+                  <div className="w-12 h-12 bg-green-500 rounded-full flex items-center justify-center">
+                    <CheckCircle className="h-6 w-6 text-white" />
+                  </div>
+                ) : (
+                  <div className="w-12 h-12 bg-primary rounded-full flex items-center justify-center">
+                    <Loader2 className="h-6 w-6 text-white animate-spin" />
+                  </div>
+                )}
+              </div>
+              
+              {/* Current Step */}
+              <div className="mb-4">
+                <h3 className="text-xl font-bold text-foreground mb-2">
+                  {steps[processingStep]?.title || 'Processing Complete'}
+                </h3>
+                <p className="text-muted-foreground">
+                  {steps[processingStep]?.description || 'Your post is ready!'}
+                </p>
+              </div>
+              
+              {/* Step Counter */}
+              <div className="flex items-center justify-center space-x-2">
+                <span className="text-sm text-muted-foreground">Step {processingStep + 1} of {steps.length}</span>
+                <div className="flex space-x-1">
+                  {steps.map((_, index) => (
+                    <div
+                      key={index}
+                      className={`w-2 h-2 rounded-full ${
+                        index <= processingStep ? 'bg-primary' : 'bg-muted'
+                      }`}
+                    />
+                  ))}
+                </div>
+              </div>
+            </div>
           </div>
 
           {/* Results */}
           {transcription && (
-            <div className="space-y-6">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
               {/* Transcription */}
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center">
-                    <Mic className="h-5 w-5 mr-2 text-indigo-600" />
-                    Transcription
-                  </CardTitle>
-                  <CardDescription>
-                    Your speech converted to text
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="bg-gray-50 p-4 rounded-lg">
-                    <p className="text-gray-700">{transcription}</p>
+              <div className="bg-white rounded-xl border border-border shadow-sm p-6">
+                <div className="flex items-center mb-4">
+                  <div className="w-8 h-8 bg-muted rounded-lg flex items-center justify-center mr-3">
+                    <FileText className="h-5 w-5 text-muted-foreground" />
                   </div>
-                </CardContent>
-              </Card>
+                  <div>
+                    <h3 className="font-bold text-foreground">Transcription</h3>
+                    <p className="text-sm text-muted-foreground">Your speech converted to text</p>
+                  </div>
+                </div>
+                <div className="bg-muted/50 p-4 rounded-lg">
+                  <p className="text-foreground">{transcription}</p>
+                </div>
+              </div>
 
               {/* Generated Post */}
               {generatedPost && (
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="flex items-center">
-                      <FileText className="h-5 w-5 mr-2 text-green-600" />
-                      Generated Post
-                    </CardTitle>
-                    <CardDescription>
-                      Your content ready for publishing
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="bg-green-50 p-4 rounded-lg">
-                      <p className="text-gray-700">{generatedPost}</p>
+                <div className="bg-white rounded-xl border border-border shadow-sm p-6">
+                  <div className="flex items-center justify-between mb-4">
+                    <div className="flex items-center">
+                      <div className="w-8 h-8 bg-green-100 rounded-lg flex items-center justify-center mr-3">
+                        <FileText className="h-5 w-5 text-green-600" />
+                      </div>
+                      <div>
+                        <h3 className="font-bold text-foreground">Generated Post</h3>
+                        <p className="text-sm text-muted-foreground">Your content ready for publishing</p>
+                      </div>
                     </div>
-                  </CardContent>
-                </Card>
+                    <Button
+                      onClick={() => {
+                        navigator.clipboard.writeText(generatedPost)
+                        toast.success('Post copied to clipboard!')
+                      }}
+                      variant="outline"
+                      size="sm"
+                      className="flex items-center border-border hover:bg-muted"
+                    >
+                      <FileText className="h-4 w-4 mr-2" />
+                      Copy
+                    </Button>
+                  </div>
+                  <div className="bg-muted/50 p-4 rounded-lg max-h-64 overflow-y-auto">
+                    <p className="text-foreground whitespace-pre-wrap">{generatedPost}</p>
+                  </div>
+                </div>
               )}
 
               {/* Action Button */}
               {!isProcessing && (
-                <div className="text-center">
+                <div className="lg:col-span-2 text-center mt-8">
                   <Button
                     onClick={handleViewPosts}
-                    className="bg-indigo-600 hover:bg-indigo-700 text-white px-8 py-3"
+                    className="bg-primary hover:bg-primary/90 text-primary-foreground px-8 py-3 rounded-lg"
                     size="lg"
                   >
                     <ArrowRight className="h-5 w-5 mr-2" />
@@ -302,6 +300,9 @@ export default function ProcessingPage() {
           )}
         </div>
       </main>
+
+      {/* Mobile Bottom Navigation */}
+      <MobileBottomNav />
     </div>
   )
 }

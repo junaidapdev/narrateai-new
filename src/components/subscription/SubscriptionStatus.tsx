@@ -1,9 +1,8 @@
 'use client'
 
 import { Badge } from "@/components/ui/badge"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Crown, Clock, CheckCircle, XCircle } from "lucide-react"
-import { UpgradeButton } from "./UpgradeButton"
+import { Button } from "@/components/ui/button"
+import { Crown, CheckCircle, XCircle } from "lucide-react"
 
 interface SubscriptionStatusProps {
   subscriptionStatus: 'trial' | 'active' | 'cancelled' | 'expired'
@@ -25,27 +24,27 @@ export function SubscriptionStatus({
       case 'active':
         return <CheckCircle className="h-4 w-4 text-green-500" />
       case 'trial':
-        return <Clock className="h-4 w-4 text-yellow-500" />
+        return <Crown className="h-4 w-4 text-yellow-500" />
       case 'cancelled':
       case 'expired':
         return <XCircle className="h-4 w-4 text-red-500" />
       default:
-        return <Clock className="h-4 w-4 text-gray-500" />
+        return <Crown className="h-4 w-4 text-muted-foreground" />
     }
   }
 
   const getStatusBadge = () => {
     switch (subscriptionStatus) {
       case 'active':
-        return <Badge className="bg-green-100 text-green-800">Active</Badge>
+        return <Badge className="bg-green-100 text-green-800 border-green-200">Active</Badge>
       case 'trial':
-        return <Badge className="bg-yellow-100 text-yellow-800">Trial</Badge>
+        return <Badge className="bg-yellow-100 text-yellow-800 border-yellow-200">Trial</Badge>
       case 'cancelled':
-        return <Badge className="bg-red-100 text-red-800">Cancelled</Badge>
+        return <Badge className="bg-red-100 text-red-800 border-red-200">Cancelled</Badge>
       case 'expired':
-        return <Badge className="bg-red-100 text-red-800">Expired</Badge>
+        return <Badge className="bg-red-100 text-red-800 border-red-200">Expired</Badge>
       default:
-        return <Badge className="bg-gray-100 text-gray-800">Unknown</Badge>
+        return <Badge className="bg-gray-100 text-gray-800 border-gray-200">Unknown</Badge>
     }
   }
 
@@ -65,53 +64,43 @@ export function SubscriptionStatus({
   }
 
   return (
-    <Card>
-      <CardHeader>
-        <div className="flex items-center justify-between">
-          <div className="flex items-center space-x-2">
-            {getStatusIcon()}
-            <CardTitle className="text-lg">Subscription Status</CardTitle>
-          </div>
-          {getStatusBadge()}
+    <div className="group relative overflow-hidden rounded-2xl border border-border/50 bg-card p-6 transition-all hover:border-border hover:shadow-lg animate-scale-in">
+      {/* Icon */}
+      <div className="mb-4 flex h-10 w-10 items-center justify-center rounded-xl bg-accent/50 text-accent-foreground transition-colors group-hover:bg-accent">
+        {getStatusIcon()}
+      </div>
+
+      {/* Content */}
+      <div className="space-y-1">
+        <p className="text-sm font-medium text-muted-foreground">Subscription</p>
+        <p className="font-serif text-3xl font-medium tracking-tight">
+          {subscriptionStatus === 'active' ? subscriptionPlan?.charAt(0).toUpperCase() + subscriptionPlan?.slice(1) : 'Trial'}
+        </p>
+        <p className="text-xs text-muted-foreground">
+          {subscriptionStatus === 'active' 
+            ? `Active ${subscriptionPlan} plan`
+            : getStatusText()
+          }
+        </p>
+      </div>
+
+      {/* Status Badge */}
+      <div className="mt-4">
+        {getStatusBadge()}
+      </div>
+
+      {/* Action Button */}
+      {(isTrial || subscriptionStatus === 'cancelled' || subscriptionStatus === 'expired') && (
+        <div className="mt-4 pt-4 border-t border-border/50">
+          <Button 
+            size="sm" 
+            onClick={onUpgrade}
+            className="w-full bg-primary hover:bg-primary/90 text-primary-foreground"
+          >
+            Upgrade Plan
+          </Button>
         </div>
-        <CardDescription>
-          {getStatusText()}
-        </CardDescription>
-      </CardHeader>
-      <CardContent>
-        {subscriptionStatus === 'active' && subscriptionEndDate && (
-          <div className="text-sm text-gray-600 mb-4">
-            Next billing: {new Date(subscriptionEndDate).toLocaleDateString()}
-          </div>
-        )}
-        
-        {isTrial && (
-          <div className="flex items-center justify-between">
-            <div className="text-sm text-gray-600">
-              Upgrade to unlock unlimited recordings
-            </div>
-            <UpgradeButton size="sm" onUpgrade={onUpgrade} />
-          </div>
-        )}
-        
-        {subscriptionStatus === 'cancelled' && (
-          <div className="flex items-center justify-between">
-            <div className="text-sm text-gray-600">
-              Reactivate your subscription to continue
-            </div>
-            <UpgradeButton size="sm" onUpgrade={onUpgrade} />
-          </div>
-        )}
-        
-        {subscriptionStatus === 'expired' && (
-          <div className="flex items-center justify-between">
-            <div className="text-sm text-gray-600">
-              Your subscription has expired. Renew to continue.
-            </div>
-            <UpgradeButton size="sm" onUpgrade={onUpgrade} />
-          </div>
-        )}
-      </CardContent>
-    </Card>
+      )}
+    </div>
   )
 }

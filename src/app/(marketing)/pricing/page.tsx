@@ -7,16 +7,49 @@ import Link from "next/link"
 import { SUBSCRIPTION_PLANS } from "@/lib/constants"
 import { useAuth } from "@/lib/hooks/useAuth"
 import { useSubscription } from "@/lib/hooks/useSubscription"
-import { Crown, Check } from "lucide-react"
+import { Crown, Check, Settings, User, Mic, LogOut } from "lucide-react"
 import { useSearchParams, useRouter } from "next/navigation"
-import { useEffect, Suspense } from "react"
+import { useEffect, Suspense, useState, useRef } from "react"
 import { toast } from "sonner"
+import { createClient } from '@/lib/supabase/client'
 
 function PricingContent() {
   const { user, loading: authLoading } = useAuth()
   const { subscription, trialUsage, refetch } = useSubscription()
   const searchParams = useSearchParams()
   const router = useRouter()
+  const supabase = createClient()
+  const [showUserMenu, setShowUserMenu] = useState(false)
+  const menuRef = useRef<HTMLDivElement>(null)
+
+  // Close menu when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
+        setShowUserMenu(false)
+      }
+    }
+
+    document.addEventListener('mousedown', handleClickOutside)
+    return () => document.removeEventListener('mousedown', handleClickOutside)
+  }, [])
+
+  const handleSignOut = async () => {
+    try {
+      await supabase.auth.signOut()
+      toast.success('Signed out successfully!')
+      router.push('/')
+    } catch (error) {
+      toast.error('Failed to sign out')
+    }
+  }
+
+  const getUserInitials = (name: string, email: string) => {
+    if (name) {
+      return name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2)
+    }
+    return email.slice(0, 2).toUpperCase()
+  }
 
   // Handle payment redirects
   useEffect(() => {
@@ -48,236 +81,322 @@ function PricingContent() {
   }, [user, subscription])
 
   const handleUpgrade = (plan: 'monthly' | 'yearly') => {
-    // Redirect to Lemon Squeezy checkout
-    const checkoutUrl = plan === 'monthly' 
-      ? process.env.NEXT_PUBLIC_LEMONSQUEEZY_MONTHLY_URL || 'https://narrateai.lemonsqueezy.com/buy/7e443c6b-7633-481a-a948-9236277bc821'
-      : process.env.NEXT_PUBLIC_LEMONSQUEEZY_YEARLY_URL || 'https://narrateai.lemonsqueezy.com/buy/bc477336-bc14-495a-b2c6-53efd148c5fb'
+    // Get the base checkout URL
+    let checkoutUrl = plan === 'monthly' 
+      ? 'https://narrateai.lemonsqueezy.com/checkout/buy/7e443c6b-7633-481a-a948-9236277bc821'
+      : 'https://narrateai.lemonsqueezy.com/checkout/buy/bc477336-bc14-495a-b2c6-53efd148c5fb'
     
-    window.open(checkoutUrl, '_blank')
+    // Add email if user is logged in (this should still work)
+    if (user?.email) {
+      checkoutUrl += `?checkout[email]=${encodeURIComponent(user.email)}`;
+    }
+    
+    console.log('Redirecting to:', checkoutUrl);
+    window.location.href = checkoutUrl;
   }
-
+  
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-background">
       {/* Header */}
-      <header className="container mx-auto px-4 py-6">
-        <nav className="flex items-center justify-between">
-          <Link href="/" className="text-2xl font-bold text-indigo-600">
-            Narrate AI
-          </Link>
-          <div className="flex items-center space-x-4">
-            {user ? (
-              <div className="flex items-center space-x-4">
-                <Link href="/dashboard">
-                  <Button variant="ghost">Dashboard</Button>
-                </Link>
-                <span className="text-sm text-gray-600">
-                  {user.user_metadata?.full_name || user.email}
-                </span>
+      <header className="border-b border-border/40 bg-background/80 backdrop-blur-sm sticky top-0 z-50">
+        <div className="mx-auto max-w-7xl px-6 md:px-8 lg:px-12">
+          <div className="flex h-16 items-center justify-between">
+            {/* Logo */}
+            <Link href="/" className="flex items-center gap-2">
+              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary">
+                <div className="h-3 w-3 rounded-full bg-primary-foreground" />
               </div>
-            ) : (
-              <>
-                <Link href="/signin">
-                  <Button variant="ghost">Sign In</Button>
-                </Link>
-                <Link href="/signup">
-                  <Button>Get Started</Button>
-                </Link>
-              </>
-            )}
+              <span className="font-serif text-xl font-medium tracking-tight">Narrate AI</span>
+            </Link>
+
+            {/* Navigation */}
+            <nav className="hidden md:flex items-center gap-8">
+              <Link
+                href="#features"
+                className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
+              >
+                Features
+              </Link>
+              <Link
+                href="#how-it-works"
+                className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
+              >
+                How it Works
+              </Link>
+              <Link
+                href="#testimonials"
+                className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
+              >
+                Testimonials
+              </Link>
+              <Link
+                href="/pricing"
+                className="text-sm font-medium text-foreground transition-colors hover:text-muted-foreground"
+              >
+                Pricing
+              </Link>
+            </nav>
+
+            {/* Actions */}
+            <div className="flex items-center gap-3">
+              {user ? (
+                <>
+                  <Link href="/recording">
+                    <Button className="gap-2 bg-primary hover:bg-primary/90 text-primary-foreground shadow-lg">
+                      <Mic className="h-4 w-4" />
+                      Record
+                    </Button>
+                  </Link>
+                  <Link href="/dashboard">
+                    <Button variant="outline" className="border-border hover:bg-muted">
+                      <Settings className="h-4 w-4" />
+                    </Button>
+                  </Link>
+                  <div className="relative" ref={menuRef}>
+                    <Button
+                      variant="ghost"
+                      className="h-8 w-8 rounded-full p-0"
+                      onClick={() => setShowUserMenu(!showUserMenu)}
+                    >
+                      <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center">
+                        <span className="text-xs font-medium text-primary">
+                          {getUserInitials(user.user_metadata?.full_name || '', user.email || '')}
+                        </span>
+                      </div>
+                    </Button>
+                    {showUserMenu && (
+                      <div className="absolute right-0 mt-2 w-48 bg-background border border-border rounded-lg shadow-lg z-50">
+                        <div className="p-3 border-b border-border">
+                          <p className="text-sm font-medium text-foreground">
+                            {user.user_metadata?.full_name || 'User'}
+                          </p>
+                          <p className="text-xs text-muted-foreground">{user.email}</p>
+                        </div>
+                        <div className="p-1">
+                          <Link href="/dashboard">
+                            <Button variant="ghost" className="w-full justify-start text-left">
+                              <User className="h-4 w-4 mr-2" />
+                              Dashboard
+                            </Button>
+                          </Link>
+                          <Link href="/settings">
+                            <Button variant="ghost" className="w-full justify-start text-left">
+                              <Settings className="h-4 w-4 mr-2" />
+                              Settings
+                            </Button>
+                          </Link>
+                          <Button
+                            variant="ghost"
+                            className="w-full justify-start text-left text-red-600 hover:text-red-700 hover:bg-red-50"
+                            onClick={handleSignOut}
+                          >
+                            <LogOut className="h-4 w-4 mr-2" />
+                            Sign Out
+                          </Button>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </>
+              ) : (
+                <>
+                  <Link href="/signin">
+                    <Button variant="ghost">Sign In</Button>
+                  </Link>
+                  <Link href="/signup">
+                    <Button className="bg-primary hover:bg-primary/90 text-primary-foreground">
+                      Get Started
+                    </Button>
+                  </Link>
+                </>
+              )}
+            </div>
           </div>
-        </nav>
+        </div>
       </header>
 
-      {/* Hero Section */}
-      <section className="container mx-auto px-4 py-20 text-center">
-        <h1 className="text-4xl font-bold text-gray-900 mb-6">
-          {user ? 'Upgrade Your Plan' : 'Simple, transparent pricing'}
-        </h1>
-        <p className="text-xl text-gray-600 mb-12">
-          {user 
-            ? 'Choose the plan that\'s right for you. Upgrade or downgrade at any time.'
-            : 'Choose the plan that\'s right for you. Upgrade or downgrade at any time.'
-          }
-        </p>
-        
-        {/* Trial Usage Indicator for logged-in users */}
-        {user && trialUsage && trialUsage.is_trial && (
-          <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-8 max-w-md mx-auto">
-            <div className="flex items-center justify-center space-x-2 mb-2">
-              <Crown className="h-5 w-5 text-yellow-600" />
-              <span className="text-sm font-medium text-yellow-800">
-                Current Trial Usage
-              </span>
-            </div>
-            <div className="text-center">
-              <div className="text-2xl font-bold text-yellow-800 mb-1">
-                {trialUsage.minutes_used.toFixed(1)}/{trialUsage.minutes_limit} minutes
-              </div>
-              <p className="text-sm text-yellow-700">
-                {trialUsage.minutes_limit - trialUsage.minutes_used > 0 
-                  ? `${(trialUsage.minutes_limit - trialUsage.minutes_used).toFixed(1)} minutes remaining`
-                  : 'Trial limit reached - upgrade to continue'
-                }
-              </p>
-            </div>
-          </div>
-        )}
-      </section>
+      {/* Main Content */}
+      <main className="mx-auto max-w-7xl px-6 py-12 md:px-8 lg:px-12">
+        <div className="text-center mb-16">
+          <h1 className="text-4xl font-serif font-bold tracking-tight text-foreground sm:text-5xl">
+            Simple, transparent pricing
+          </h1>
+          <p className="mt-6 text-lg leading-8 text-muted-foreground max-w-2xl mx-auto">
+            Choose the plan that's right for you. No hidden fees, no surprises.
+          </p>
+        </div>
 
-      {/* Pricing Cards */}
-      <section className="container mx-auto px-4 pb-20">
-        <div className="grid md:grid-cols-2 gap-8 max-w-4xl mx-auto">
+        {/* Pricing Cards */}
+        <div className="grid lg:grid-cols-2 gap-8 max-w-4xl mx-auto">
           {/* Monthly Plan */}
-          <Card className="border-indigo-200">
-            <CardHeader className="text-center">
-              <CardTitle className="text-2xl flex items-center justify-center space-x-2">
-                <Crown className="h-6 w-6 text-indigo-600" />
-                <span>Pro Monthly</span>
-              </CardTitle>
-              <div className="text-4xl font-bold text-gray-900">
-                $29<span className="text-lg text-gray-500">/month</span>
+          <Card className="bg-white border border-border shadow-sm hover:shadow-md transition-shadow">
+            <CardHeader className="text-center pb-6">
+              <div className="flex items-center justify-center gap-2 mb-4">
+                <Crown className="h-5 w-5 text-primary" />
+                <Badge className="bg-primary/10 text-primary">Most Popular</Badge>
               </div>
-              <CardDescription>
-                Best for content creators and professionals
+              <CardTitle className="text-2xl font-serif font-bold text-foreground">Pro Monthly</CardTitle>
+              <CardDescription className="text-muted-foreground">
+                Perfect for getting started
               </CardDescription>
+              <div className="mt-4">
+                <span className="text-4xl font-bold text-foreground">$29</span>
+                <span className="text-muted-foreground">/month</span>
+              </div>
             </CardHeader>
-            <CardContent>
-              <ul className="space-y-3 mb-8">
-                <li className="flex items-center">
-                  <Check className="h-4 w-4 text-green-500 mr-2" />
-                  Unlimited recordings
-                </li>
-                <li className="flex items-center">
-                  <Check className="h-4 w-4 text-green-500 mr-2" />
-                  AI-powered transcription
-                </li>
-                <li className="flex items-center">
-                  <Check className="h-4 w-4 text-green-500 mr-2" />
-                  Content generation
-                </li>
-                <li className="flex items-center">
-                  <Check className="h-4 w-4 text-green-500 mr-2" />
-                  Export options
-                </li>
-                <li className="flex items-center">
-                  <Check className="h-4 w-4 text-green-500 mr-2" />
-                  Priority support
-                </li>
-              </ul>
+            <CardContent className="space-y-6">
+              <div className="space-y-4">
+                <div className="flex items-center gap-3">
+                  <Check className="h-5 w-5 text-green-600" />
+                  <span className="text-foreground">Unlimited recordings</span>
+                </div>
+                <div className="flex items-center gap-3">
+                  <Check className="h-5 w-5 text-green-600" />
+                  <span className="text-foreground">AI-powered content generation</span>
+                </div>
+                <div className="flex items-center gap-3">
+                  <Check className="h-5 w-5 text-green-600" />
+                  <span className="text-foreground">LinkedIn post optimization</span>
+                </div>
+                <div className="flex items-center gap-3">
+                  <Check className="h-5 w-5 text-green-600" />
+                  <span className="text-foreground">Priority support</span>
+                </div>
+                <div className="flex items-center gap-3">
+                  <Check className="h-5 w-5 text-green-600" />
+                  <span className="text-foreground">Mobile app access</span>
+                </div>
+              </div>
               <Button 
-                className="w-full bg-indigo-600 hover:bg-indigo-700 text-white"
                 onClick={() => handleUpgrade('monthly')}
+                className="w-full bg-primary hover:bg-primary/90 text-primary-foreground"
               >
-                <Crown className="h-4 w-4 mr-2" />
-                {user ? 'Upgrade to Monthly' : 'Start Free Trial'}
+                Start Monthly Plan
               </Button>
             </CardContent>
           </Card>
 
           {/* Yearly Plan */}
-          <Card className="border-green-500 shadow-lg relative">
-            <div className="absolute -top-3 left-1/2 transform -translate-x-1/2">
-              <Badge className="bg-green-500 text-white">Save 17%</Badge>
-            </div>
-            <CardHeader className="text-center">
-              <CardTitle className="text-2xl flex items-center justify-center space-x-2">
-                <Crown className="h-6 w-6 text-green-600" />
-                <span>Pro Yearly</span>
-              </CardTitle>
-              <div className="text-4xl font-bold text-gray-900">
-                $290<span className="text-lg text-gray-500">/year</span>
+          <Card className="bg-white border border-border shadow-sm hover:shadow-md transition-shadow">
+            <CardHeader className="text-center pb-6">
+              <div className="flex items-center justify-center gap-2 mb-4">
+                <Crown className="h-5 w-5 text-primary" />
+                <Badge className="bg-green-100 text-green-800">Best Value</Badge>
               </div>
-              <CardDescription>
-                Best value - save $58 compared to monthly
+              <CardTitle className="text-2xl font-serif font-bold text-foreground">Pro Yearly</CardTitle>
+              <CardDescription className="text-muted-foreground">
+                Save 2 months with yearly billing
               </CardDescription>
+              <div className="mt-4">
+                <span className="text-4xl font-bold text-foreground">$290</span>
+                <span className="text-muted-foreground">/year</span>
+                <div className="text-sm text-green-600 font-medium mt-1">
+                  Save $58 compared to monthly
+                </div>
+              </div>
             </CardHeader>
-            <CardContent>
-              <ul className="space-y-3 mb-8">
-                <li className="flex items-center">
-                  <Check className="h-4 w-4 text-green-500 mr-2" />
-                  Everything in Monthly
-                </li>
-                <li className="flex items-center">
-                  <Check className="h-4 w-4 text-green-500 mr-2" />
-                  Advanced analytics
-                </li>
-                <li className="flex items-center">
-                  <Check className="h-4 w-4 text-green-500 mr-2" />
-                  Team collaboration
-                </li>
-                <li className="flex items-center">
-                  <Check className="h-4 w-4 text-green-500 mr-2" />
-                  Custom integrations
-                </li>
-                <li className="flex items-center">
-                  <Check className="h-4 w-4 text-green-500 mr-2" />
-                  Dedicated support
-                </li>
-              </ul>
+            <CardContent className="space-y-6">
+              <div className="space-y-4">
+                <div className="flex items-center gap-3">
+                  <Check className="h-5 w-5 text-green-600" />
+                  <span className="text-foreground">Everything in Monthly</span>
+                </div>
+                <div className="flex items-center gap-3">
+                  <Check className="h-5 w-5 text-green-600" />
+                  <span className="text-foreground">Advanced analytics</span>
+                </div>
+                <div className="flex items-center gap-3">
+                  <Check className="h-5 w-5 text-green-600" />
+                  <span className="text-foreground">Custom templates</span>
+                </div>
+                <div className="flex items-center gap-3">
+                  <Check className="h-5 w-5 text-green-600" />
+                  <span className="text-foreground">Team collaboration</span>
+                </div>
+                <div className="flex items-center gap-3">
+                  <Check className="h-5 w-5 text-green-600" />
+                  <span className="text-foreground">API access</span>
+                </div>
+              </div>
               <Button 
-                className="w-full bg-green-600 hover:bg-green-700 text-white"
                 onClick={() => handleUpgrade('yearly')}
+                className="w-full bg-primary hover:bg-primary/90 text-primary-foreground"
               >
-                <Crown className="h-4 w-4 mr-2" />
-                {user ? 'Upgrade to Yearly' : 'Start Free Trial'}
+                Start Yearly Plan
               </Button>
             </CardContent>
           </Card>
         </div>
-      </section>
 
-      {/* FAQ Section */}
-      <section className="container mx-auto px-4 py-20">
-        <h2 className="text-3xl font-bold text-center text-gray-900 mb-12">
-          Frequently Asked Questions
-        </h2>
-        <div className="max-w-3xl mx-auto space-y-8">
-          <div>
-            <h3 className="text-xl font-semibold text-gray-900 mb-2">
-              Can I change my plan at any time?
-            </h3>
-            <p className="text-gray-600">
-              Yes, you can upgrade or downgrade your plan at any time. Changes take effect immediately.
-            </p>
-          </div>
-          <div>
-            <h3 className="text-xl font-semibold text-gray-900 mb-2">
-              What happens to my data if I cancel?
-            </h3>
-            <p className="text-gray-600">
-              Your data is always yours. You can export your recordings and posts before canceling.
-            </p>
-          </div>
-          <div>
-            <h3 className="text-xl font-semibold text-gray-900 mb-2">
-              Is there a free trial?
-            </h3>
-            <p className="text-gray-600">
-              Yes! All paid plans come with a 14-day free trial. No credit card required.
-            </p>
+        {/* Why Choose Pro Yearly Section */}
+        <div className="mt-16 text-center">
+          <h2 className="text-2xl font-serif font-bold text-foreground mb-8">
+            Why choose Pro Yearly?
+          </h2>
+          <div className="grid md:grid-cols-3 gap-8 max-w-3xl mx-auto">
+            <div className="text-center">
+              <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center mx-auto mb-4">
+                <Crown className="h-6 w-6 text-primary" />
+              </div>
+              <h3 className="font-semibold text-foreground mb-2">Best Value</h3>
+              <p className="text-sm text-muted-foreground">
+                Save $58 per year compared to monthly billing
+              </p>
+            </div>
+            <div className="text-center">
+              <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center mx-auto mb-4">
+                <Check className="h-6 w-6 text-primary" />
+              </div>
+              <h3 className="font-semibold text-foreground mb-2">More Features</h3>
+              <p className="text-sm text-muted-foreground">
+                Advanced analytics, custom templates, and API access
+              </p>
+            </div>
+            <div className="text-center">
+              <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center mx-auto mb-4">
+                <Settings className="h-6 w-6 text-primary" />
+              </div>
+              <h3 className="font-semibold text-foreground mb-2">Team Ready</h3>
+              <p className="text-sm text-muted-foreground">
+                Collaboration features for growing teams
+              </p>
+            </div>
           </div>
         </div>
-      </section>
 
-      {/* Footer */}
-      <footer className="container mx-auto px-4 py-12 border-t">
-        <div className="flex flex-col md:flex-row justify-between items-center">
-          <div className="text-2xl font-bold text-indigo-600 mb-4 md:mb-0">
-            Narrate AI
-          </div>
-          <div className="flex space-x-6">
-            <Link href="/" className="text-gray-600 hover:text-gray-900">
-              Home
-            </Link>
-            <Link href="/about" className="text-gray-600 hover:text-gray-900">
-              About
-            </Link>
-            <Link href="/signin" className="text-gray-600 hover:text-gray-900">
-              Sign In
-            </Link>
+        {/* FAQ Section */}
+        <div className="mt-20">
+          <h2 className="text-2xl font-serif font-bold text-center text-foreground mb-12">
+            Frequently Asked Questions
+          </h2>
+          <div className="max-w-3xl mx-auto space-y-8">
+            <div>
+              <h3 className="text-lg font-semibold text-foreground mb-2">
+                Can I change my plan anytime?
+              </h3>
+              <p className="text-muted-foreground">
+                Yes, you can upgrade or downgrade your plan at any time. Changes take effect immediately.
+              </p>
+            </div>
+            <div>
+              <h3 className="text-lg font-semibold text-foreground mb-2">
+                What happens if I cancel?
+              </h3>
+              <p className="text-muted-foreground">
+                You'll keep access to all features until the end of your current billing period. No partial refunds.
+              </p>
+            </div>
+            <div>
+              <h3 className="text-lg font-semibold text-foreground mb-2">
+                Is there a free trial?
+              </h3>
+              <p className="text-muted-foreground">
+                Yes! All new accounts get a 7-day free trial with full access to all features.
+              </p>
+            </div>
           </div>
         </div>
-      </footer>
+      </main>
     </div>
   )
 }
@@ -285,10 +404,10 @@ function PricingContent() {
 export default function PricingPage() {
   return (
     <Suspense fallback={
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#0A66C2] mx-auto"></div>
-          <p className="mt-4 text-gray-600">Loading...</p>
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
+          <p className="mt-4 text-muted-foreground">Loading...</p>
         </div>
       </div>
     }>
@@ -296,4 +415,3 @@ export default function PricingPage() {
     </Suspense>
   )
 }
-

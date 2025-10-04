@@ -1,222 +1,374 @@
-import { NextRequest, NextResponse } from 'next/server'
-import { createClient } from '@/lib/supabase/server'
-import crypto from 'crypto'
+import { NextRequest, NextResponse } from 'next/server';
+import { createClient } from '@supabase/supabase-js';
+import crypto from 'crypto';
+
+// Create admin client for webhook operations
+const createAdminClient = () => {
+  if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.SUPABASE_SERVICE_ROLE_KEY) {
+    throw new Error('Missing Supabase environment variables');
+  }
+  
+  return createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL,
+    process.env.SUPABASE_SERVICE_ROLE_KEY, // This is the service role key, not anon key
+    {
+      auth: {
+        autoRefreshToken: false,
+        persistSession: false
+      }
+    }
+  );
+};
+
+// Define the webhook event types
+interface WebhookPayload {
+  meta: {
+    event_name: string;
+    webhook_id: string;
+    test_mode: boolean;
+  };
+  data: {
+    id: string;
+    type: string;
+    attributes: {
+      status?: string;
+      user_email?: string;
+      user_name?: string;
+      product_id?: number;
+      variant_id?: number;
+      customer_id?: number;
+      order_id?: number;
+      urls?: {
+        customer_portal?: string;
+        update_payment_method?: string;
+      };
+      first_subscription_item?: {
+        subscription_id: number;
+        price_id: number;
+        quantity: number;
+      };
+    };
+  };
+}
 
 export async function POST(request: NextRequest) {
   try {
-    const body = await request.text()
-    const signature = request.headers.get('x-signature')
+    // Get the raw body for signature verification
+    const rawBody = await request.text();
     
-    console.log('Webhook received:', { 
-      hasSignature: !!signature, 
-      bodyLength: body.length,
-      headers: Object.fromEntries(request.headers.entries())
-    })
+    // Get the signature from headers
+    const signature = request.headers.get('X-Signature') || 
+                     request.headers.get('x-signature');
     
-    // Verify webhook signature
-    const webhookSecret = process.env.LEMONSQUEEZY_WEBHOOK_SECRET
-    if (!webhookSecret) {
-      console.error('Lemon Squeezy webhook secret not configured')
-      // For testing, allow webhooks without signature verification
-      console.log('Proceeding without signature verification (testing mode)')
-    } else if (signature) {
-      // Verify signature
-      const expectedSignature = crypto
-        .createHmac('sha256', webhookSecret)
-        .update(body)
-        .digest('hex')
-
-      if (signature !== `sha256=${expectedSignature}`) {
-        console.error('Invalid webhook signature')
-        return NextResponse.json({ error: 'Invalid signature' }, { status: 401 })
+    // Verify the webhook signature
+    const secret = process.env.LEMON_SQUEEZY_WEBHOOK_SECRET; // Fixed: use correct env var name
+    
+    if (secret) {
+      // LemonSqueezy uses HMAC-SHA256 for signatures
+      const hmac = crypto.createHmac('sha256', secret);
+      const digest = hmac.update(rawBody).digest('hex');
+      
+      if (signature !== digest) {
+        console.error('Invalid webhook signature');
+        return NextResponse.json(
+          { error: 'Invalid signature' },
+          { status: 401 }
+        );
       }
+      console.log('Webhook signature verified successfully');
+    } else {
+      console.warn('LEMONSQUEEZY_WEBHOOK_SECRET not set - skipping signature verification');
     }
-
-    const event = JSON.parse(body)
-    console.log('Lemon Squeezy webhook received:', {
-      type: event.type,
-      data: event.data
-    })
-
-    const supabase = createClient()
-
-    switch (event.type) {
-      case 'order_created':
-        await handleOrderCreated(event.data, supabase)
-        break
-      case 'subscription_created':
-        await handleSubscriptionCreated(event.data, supabase)
-        break
-      case 'subscription_updated':
-        await handleSubscriptionUpdated(event.data, supabase)
-        break
-      case 'subscription_cancelled':
-        await handleSubscriptionCancelled(event.data, supabase)
-        break
-      case 'subscription_resumed':
-        await handleSubscriptionResumed(event.data, supabase)
-        break
-      case 'subscription_expired':
-        await handleSubscriptionExpired(event.data, supabase)
-        break
-      default:
-        console.log('Unhandled webhook event type:', event.type)
-    }
-
-    return NextResponse.json({ received: true })
-  } catch (error) {
-    console.error('Webhook processing error:', error)
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
-  }
-}
-
-async function handleOrderCreated(order: any, supabase: any) {
-  console.log('Order created:', order.id)
-  console.log('Order data:', JSON.stringify(order, null, 2))
-  
-  try {
-    // Find user by email
-    const { data: profile, error } = await supabase
-      .from('profiles')
-      .select('*')
-      .eq('email', order.user_email)
-      .single()
-
-    if (error) {
-      console.error('Error finding user for order:', error)
-      return
-    }
-
-    if (!profile) {
-      console.error('User not found for order:', order.user_email)
-      return
-    }
-
-    console.log('Found user profile for order:', profile.id, profile.email)
-
-    // If this is a subscription order, we'll wait for the subscription_created event
-    // But we can log it for debugging
-    if (order.subscription_id) {
-      console.log('Order is for subscription:', order.subscription_id)
-    }
-  } catch (error) {
-    console.error('Error in handleOrderCreated:', error)
-  }
-}
-
-async function handleSubscriptionCreated(subscription: any, supabase: any) {
-  console.log('Subscription created:', subscription.id)
-  console.log('Subscription data:', JSON.stringify(subscription, null, 2))
-  
-  try {
-    // Find user by email
-    const { data: profile, error } = await supabase
-      .from('profiles')
-      .select('*')
-      .eq('email', subscription.user_email)
-      .single()
-
-    if (error) {
-      console.error('Error finding user:', error)
-      return
-    }
-
-    if (!profile) {
-      console.error('User not found for subscription:', subscription.user_email)
-      return
-    }
-
-    console.log('Found user profile:', profile.id, profile.email)
-
-    // Determine subscription plan
-    const plan = subscription.variant_name?.toLowerCase().includes('yearly') ? 'yearly' : 'monthly'
     
-    // Update user subscription status
-    const { error: updateError } = await supabase
-      .from('profiles')
-      .update({
-        subscription_status: 'active',
-        subscription_id: subscription.id,
-        subscription_plan: plan,
-        subscription_end_date: subscription.renews_at,
-        updated_at: new Date().toISOString()
-      })
-      .eq('id', profile.id)
-
-    if (updateError) {
-      console.error('Error updating subscription:', updateError)
-      return
+    // Parse the webhook payload
+    const payload: WebhookPayload = JSON.parse(rawBody);
+    
+    // Extract event details
+    const { meta, data } = payload;
+    const eventName = meta.event_name;
+    
+    console.log(`Received LemonSqueezy webhook: ${eventName}`);
+    console.log('Payload:', JSON.stringify(payload, null, 2));
+    
+    // Initialize Supabase admin client
+    const supabase = createAdminClient();
+    
+    // Handle different event types
+    switch (eventName) {
+      case 'order_created':
+        await handleOrderCreated(payload, supabase);
+        break;
+        
+      case 'subscription_created':
+        await handleSubscriptionCreated(payload, supabase);
+        break;
+        
+      case 'subscription_updated':
+        await handleSubscriptionUpdated(payload, supabase);
+        break;
+        
+      case 'subscription_cancelled':
+        await handleSubscriptionCancelled(payload, supabase);
+        break;
+        
+      default:
+        console.log(`Unhandled event type: ${eventName}`);
     }
-
-    console.log('Successfully activated subscription for user:', profile.email, 'Plan:', plan)
+    
+    return NextResponse.json(
+      { message: 'Webhook processed successfully' },
+      { status: 200 }
+    );
+    
   } catch (error) {
-    console.error('Error in handleSubscriptionCreated:', error)
+    console.error('Webhook processing error:', error);
+    return NextResponse.json(
+      { error: 'Webhook processing failed' },
+      { status: 500 }
+    );
   }
 }
 
-async function handleSubscriptionUpdated(subscription: any, supabase: any) {
-  console.log('Subscription updated:', subscription.id)
+// Handle order creation (initial purchase)
+async function handleOrderCreated(payload: WebhookPayload, supabase: any) {
+  const { data } = payload;
+  const { user_email, order_id } = data.attributes;
   
-  const { error } = await supabase
+  console.log(`New order created for ${user_email}, Order ID: ${order_id}`);
+  
+  if (!user_email) {
+    console.log('No user email found in order');
+    return;
+  }
+
+  // Find user by email
+  let { data: profile, error: findError } = await supabase
+    .from('profiles')
+    .select('*')
+    .ilike('email', user_email)
+    .maybeSingle();
+
+  if (findError) {
+    console.error('Error finding user:', findError);
+    return;
+  }
+
+  if (!profile) {
+    console.log('User not found for email:', user_email);
+    return;
+  }
+
+  console.log('Order created successfully processed for:', user_email);
+}
+
+// Handle subscription creation
+async function handleSubscriptionCreated(payload: WebhookPayload, supabase: any) {
+  
+  const { data } = payload;
+  const { 
+    user_email, 
+    status, 
+    customer_id,
+    product_id,
+    variant_id
+  } = data.attributes;
+  
+  console.log(`Subscription created for ${user_email}`);
+  console.log(`Status: ${status}`);
+  
+  if (!user_email) {
+    console.log('No user email found in subscription');
+    return;
+  }
+
+  // Debug: Check what users exist in database
+  console.log('Searching for user with email:', user_email);
+  
+  // First, let's see what users exist
+  const { data: allProfiles, error: allError } = await supabase
+    .from('profiles')
+    .select('id, email')
+    .limit(5);
+    
+  console.log('Sample profiles in database:', allProfiles);
+
+  // Try exact match first
+  let { data: profile, error: findError } = await supabase
+    .from('profiles')
+    .select('*')
+    .eq('email', user_email)
+    .maybeSingle();
+
+  if (findError) {
+    console.error('Error with exact match:', findError);
+  }
+
+  if (!profile) {
+    // Try case-insensitive search
+    console.log('Trying case-insensitive search...');
+    const { data: profileIlike, error: ilikeError } = await supabase
+      .from('profiles')
+      .select('*')
+      .ilike('email', user_email)
+      .maybeSingle();
+      
+    if (ilikeError) {
+      console.error('Error with ilike search:', ilikeError);
+    }
+    
+    if (!profileIlike) {
+      console.log('User not found for email:', user_email);
+      console.log('Available emails:', allProfiles?.map((p: any) => p.email));      
+      // Create a new profile for this user
+      console.log('Creating new profile for user:', user_email);
+      const { data: newProfile, error: createError } = await supabase
+        .from('profiles')
+        .insert({
+          email: user_email,
+          user_id: user_email, // Use email as user_id for now
+          subscription_status: 'trial',
+          trial_minutes_used: 0,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
+        })
+        .select()
+        .single();
+        
+      if (createError) {
+        console.error('Error creating profile:', createError);
+        return;
+      }
+      
+      profile = newProfile;
+      console.log('Created new profile:', profile.id);
+    } else {
+      profile = profileIlike;
+    }
+  }
+
+  // Determine subscription plan
+  const plan = variant_id === 2 ? 'yearly' : 'monthly'; // Adjust based on your variant IDs
+  
+  // Update user subscription status
+  const { error: updateError } = await supabase
     .from('profiles')
     .update({
       subscription_status: 'active',
-      subscription_end_date: subscription.renews_at,
+      subscription_id: data.id,
+      subscription_plan: plan,
+      subscription_end_date: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
       updated_at: new Date().toISOString()
     })
-    .eq('subscription_id', subscription.id)
+    .eq('id', profile.id);
 
-  if (error) {
-    console.error('Error updating subscription:', error)
+  if (updateError) {
+    console.error('Error updating subscription:', updateError);
+    return;
   }
+
+  console.log('Successfully activated subscription for:', user_email);
 }
 
-async function handleSubscriptionCancelled(subscription: any, supabase: any) {
-  console.log('Subscription cancelled:', subscription.id)
+// Handle subscription updates
+async function handleSubscriptionUpdated(payload: WebhookPayload, supabase: any) {
+  const { data } = payload;
+  const { 
+    user_email, 
+    status,
+    customer_id 
+  } = data.attributes;
   
-  const { error } = await supabase
+  console.log(`Subscription updated for ${user_email}`);
+  console.log(`New status: ${status}`);
+  
+  if (!user_email) {
+    console.log('No user email found in subscription update');
+    return;
+  }
+
+  // Find user by email
+  let { data: profile, error: findError } = await supabase
+    .from('profiles')
+    .select('*')
+    .ilike('email', user_email)
+    .maybeSingle();
+
+  if (findError) {
+    console.error('Error finding user:', findError);
+    return;
+  }
+
+  if (!profile) {
+    console.log('User not found for email:', user_email);
+    return;
+  }
+
+  // Update subscription status
+  const { error: updateError } = await supabase
+    .from('profiles')
+    .update({
+      subscription_status: status === 'active' ? 'active' : 'cancelled',
+      updated_at: new Date().toISOString()
+    })
+    .eq('id', profile.id);
+
+  if (updateError) {
+    console.error('Error updating subscription:', updateError);
+    return;
+  }
+
+  console.log('Subscription update successfully processed for:', user_email);
+}
+
+// Handle subscription cancellation
+async function handleSubscriptionCancelled(payload: WebhookPayload, supabase: any) {
+  const { data } = payload;
+  const { user_email, customer_id } = data.attributes;
+  
+  console.log(`Subscription cancelled for ${user_email}`);
+  
+  if (!user_email) {
+    console.log('No user email found in subscription cancellation');
+    return;
+  }
+
+  // Find user by email
+  let { data: profile, error: findError } = await supabase
+    .from('profiles')
+    .select('*')
+    .ilike('email', user_email)
+    .maybeSingle();
+
+  if (findError) {
+    console.error('Error finding user:', findError);
+    return;
+  }
+
+  if (!profile) {
+    console.log('User not found for email:', user_email);
+    return;
+  }
+
+  // Update subscription status
+  const { error: updateError } = await supabase
     .from('profiles')
     .update({
       subscription_status: 'cancelled',
-      subscription_end_date: subscription.ends_at,
       updated_at: new Date().toISOString()
     })
-    .eq('subscription_id', subscription.id)
+    .eq('id', profile.id);
 
-  if (error) {
-    console.error('Error cancelling subscription:', error)
+  if (updateError) {
+    console.error('Error updating subscription:', updateError);
+    return;
   }
+
+  console.log('Subscription cancellation successfully processed for:', user_email);
 }
 
-async function handleSubscriptionResumed(subscription: any, supabase: any) {
-  console.log('Subscription resumed:', subscription.id)
-  
-  const { error } = await supabase
-    .from('profiles')
-    .update({
-      subscription_status: 'active',
-      subscription_end_date: subscription.renews_at,
-      updated_at: new Date().toISOString()
-    })
-    .eq('subscription_id', subscription.id)
-
-  if (error) {
-    console.error('Error resuming subscription:', error)
-  }
-}
-
-async function handleSubscriptionExpired(subscription: any, supabase: any) {
-  console.log('Subscription expired:', subscription.id)
-  
-  const { error } = await supabase
-    .from('profiles')
-    .update({
-      subscription_status: 'expired',
-      updated_at: new Date().toISOString()
-    })
-    .eq('subscription_id', subscription.id)
-
-  if (error) {
-    console.error('Error expiring subscription:', error)
-  }
+export async function GET() {
+  return NextResponse.json(
+    { message: 'This endpoint only accepts POST requests' },
+    { status: 405 }
+  );
 }

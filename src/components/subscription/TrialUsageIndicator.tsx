@@ -1,8 +1,7 @@
 'use client'
 
-import { Badge } from "@/components/ui/badge"
 import { Progress } from "@/components/ui/progress"
-import { Clock, AlertCircle } from "lucide-react"
+import { Clock } from "lucide-react"
 
 interface TrialUsageIndicatorProps {
   minutesUsed: number
@@ -39,38 +38,31 @@ export function TrialUsageIndicator({
   const remainingMinutes = minutesLimit - minutesUsed
 
   return (
-    <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-4">
-      <div className="flex items-center justify-between mb-2">
-        <div className="flex items-center space-x-2">
-          <Clock className="h-4 w-4 text-yellow-600" />
-          <span className="text-sm font-medium text-yellow-800">
-            Trial Usage
-          </span>
-        </div>
-        <Badge variant="outline" className="text-yellow-700 border-yellow-300">
-          {formatTimeUsage(minutesUsed)}/{minutesLimit} minutes
-        </Badge>
+    <div className="group relative overflow-hidden rounded-2xl border border-border/50 bg-card p-6 transition-all hover:border-border hover:shadow-lg animate-scale-in">
+      {/* Icon */}
+      <div className="mb-4 flex h-10 w-10 items-center justify-center rounded-xl bg-accent/50 text-accent-foreground transition-colors group-hover:bg-accent">
+        <Clock className="h-5 w-5" />
       </div>
-      
-      <Progress 
-        value={percentage} 
-        className="h-2 mb-2"
-      />
-      
-      <div className="flex items-center justify-between">
-        <p className="text-xs text-yellow-700">
-          {remainingMinutes > 0 
-            ? `${formatTimeUsage(remainingMinutes)} remaining` 
-            : 'Trial limit reached'
-          }
-        </p>
-        
-        {!canRecord && (
-          <div className="flex items-center space-x-1 text-red-600">
-            <AlertCircle className="h-3 w-3" />
-            <span className="text-xs font-medium">Upgrade required</span>
-          </div>
-        )}
+
+      {/* Content */}
+      <div className="space-y-1">
+        <p className="text-sm font-medium text-muted-foreground">Trial Usage</p>
+        <p className="font-serif text-3xl font-medium tracking-tight">{formatTimeUsage(minutesUsed)}</p>
+        <p className="text-xs text-muted-foreground">of {minutesLimit} minutes</p>
+      </div>
+
+      {/* Progress Bar */}
+      <div className="mt-4">
+        <div className="flex items-center justify-between text-xs text-muted-foreground mb-1">
+          <span>{remainingMinutes > 0 ? `${formatTimeUsage(remainingMinutes)} remaining` : 'Trial limit reached'}</span>
+          <span>{Math.round(percentage)}%</span>
+        </div>
+        <div className="w-full h-2 bg-muted rounded-full overflow-hidden">
+          <div 
+            className="h-full bg-primary rounded-full transition-all duration-500 ease-out"
+            style={{ width: `${Math.min(percentage, 100)}%` }}
+          />
+        </div>
       </div>
     </div>
   )
