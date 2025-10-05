@@ -93,11 +93,6 @@ export function DashboardHeader() {
                 Record
               </Button>
             </Link>
-            <Link href="/settings">
-              <Button variant="ghost" size="icon" className="rounded-full">
-                <Settings className="h-4 w-4" />
-              </Button>
-            </Link>
             
             {/* User Menu */}
             <div className="relative" ref={menuRef}>
@@ -131,7 +126,17 @@ export function DashboardHeader() {
                     </div>
                   </div>
                   
-                  <div className="p-2">
+                  <div className="p-2 space-y-1">
+                    <Link href="/settings">
+                      <Button
+                        variant="ghost"
+                        className="w-full justify-start gap-2 text-muted-foreground hover:text-foreground"
+                        onClick={() => setShowUserMenu(false)}
+                      >
+                        <Settings className="h-4 w-4" />
+                        Settings
+                      </Button>
+                    </Link>
                     <Button
                       variant="ghost"
                       className="w-full justify-start gap-2 text-muted-foreground hover:text-foreground"

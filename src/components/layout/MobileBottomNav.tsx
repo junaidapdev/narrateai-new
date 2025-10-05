@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { Home, Mic, FileText, Settings } from 'lucide-react'
+import { Home, Mic, FileText } from 'lucide-react'
 
 export function MobileBottomNav() {
   const pathname = usePathname()
@@ -22,11 +22,6 @@ export function MobileBottomNav() {
       href: '/posts',
       icon: FileText,
       label: 'Posts'
-    },
-    {
-      href: '/settings',
-      icon: Settings,
-      label: 'Settings'
     }
   ]
 
