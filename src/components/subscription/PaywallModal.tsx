@@ -49,19 +49,23 @@ export function PaywallModal({ isOpen, onClose, onUpgrade }: PaywallModalProps) 
               <ul className="space-y-2 mb-6">
                 <li className="flex items-center space-x-2">
                   <Check className="h-4 w-4 text-green-500" />
-                  <span className="text-sm">Unlimited recordings</span>
+                  <span className="text-sm">Unlimited voice recordings</span>
                 </li>
                 <li className="flex items-center space-x-2">
                   <Check className="h-4 w-4 text-green-500" />
-                  <span className="text-sm">Advanced AI processing</span>
+                  <span className="text-sm">AI-powered LinkedIn posts</span>
                 </li>
                 <li className="flex items-center space-x-2">
                   <Check className="h-4 w-4 text-green-500" />
-                  <span className="text-sm">Priority support</span>
+                  <span className="text-sm">Personalized content based on your goals</span>
                 </li>
                 <li className="flex items-center space-x-2">
                   <Check className="h-4 w-4 text-green-500" />
-                  <span className="text-sm">Analytics dashboard</span>
+                  <span className="text-sm">Edit and refine generated posts</span>
+                </li>
+                <li className="flex items-center space-x-2">
+                  <Check className="h-4 w-4 text-green-500" />
+                  <span className="text-sm">Cancel anytime</span>
                 </li>
               </ul>
               <Button 
@@ -90,19 +94,23 @@ export function PaywallModal({ isOpen, onClose, onUpgrade }: PaywallModalProps) 
               <ul className="space-y-2 mb-6">
                 <li className="flex items-center space-x-2">
                   <Check className="h-4 w-4 text-green-500" />
-                  <span className="text-sm">Everything in Monthly</span>
+                  <span className="text-sm">Unlimited voice recordings</span>
                 </li>
                 <li className="flex items-center space-x-2">
                   <Check className="h-4 w-4 text-green-500" />
-                  <span className="text-sm">24% savings</span>
+                  <span className="text-sm">AI-powered LinkedIn posts</span>
                 </li>
                 <li className="flex items-center space-x-2">
                   <Check className="h-4 w-4 text-green-500" />
-                  <span className="text-sm">Priority feature access</span>
+                  <span className="text-sm">Personalized content based on your goals</span>
                 </li>
                 <li className="flex items-center space-x-2">
                   <Check className="h-4 w-4 text-green-500" />
-                  <span className="text-sm">Dedicated support</span>
+                  <span className="text-sm">Edit and refine generated posts</span>
+                </li>
+                <li className="flex items-center space-x-2">
+                  <Check className="h-4 w-4 text-green-500" />
+                  <span className="text-sm">Cancel anytime</span>
                 </li>
               </ul>
               <Button 

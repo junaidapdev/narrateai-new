@@ -27,6 +27,7 @@ export default function ProcessingPage() {
   const [generatedPost, setGeneratedPost] = useState('')
   const [currentRecording, setCurrentRecording] = useState<any>(null)
   const [hasProcessed, setHasProcessed] = useState(false)
+  const [userContext, setUserContext] = useState<{ linkedinGoal?: string; backStory?: string } | null>(null)
   const router = useRouter()
   const supabase = createClient()
 
@@ -36,6 +37,35 @@ export default function ProcessingPage() {
     { id: 2, title: 'Saving Post', description: 'Storing your new content...' },
     { id: 3, title: 'Complete', description: 'Your post is ready!' }
   ]
+
+  // Fetch user context for personalization
+  useEffect(() => {
+    const fetchUserContext = async () => {
+      if (!user) return
+      
+      try {
+        const { data, error } = await supabase
+          .from('profiles')
+          .select('linkedin_goal, back_story')
+          .eq('id', user.id)
+          .single()
+
+        if (error) {
+          console.error('Error fetching user context:', error)
+          return
+        }
+
+        setUserContext({
+          linkedinGoal: data?.linkedin_goal,
+          backStory: data?.back_story
+        })
+      } catch (error) {
+        console.error('Error:', error)
+      }
+    }
+
+    fetchUserContext()
+  }, [user, supabase])
 
   useEffect(() => {
     if (recordings.length > 0 && !hasProcessed) {
@@ -79,7 +109,10 @@ export default function ProcessingPage() {
       toast.info('Generating content...')
       
       const contentService = new ContentGenerationService()
-      const { title, hook, body, call_to_action } = await contentService.generatePostFromTranscription(transcriptionResult)
+      const { title, hook, body, call_to_action } = await contentService.generatePostFromTranscription(
+        transcriptionResult, 
+        userContext || undefined
+      )
       setGeneratedPost(`${hook}\n\n${body}\n\n${call_to_action}`)
       
       // Step 3: Saving Post
@@ -93,7 +126,7 @@ export default function ProcessingPage() {
         body: body,
         call_to_action: call_to_action,
         platform: 'linkedin',
-        status: 'published',
+        status: 'draft',
         user_id: user?.id || '',
         recording_id: recording.id,
       })

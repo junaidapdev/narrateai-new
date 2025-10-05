@@ -1,5 +1,6 @@
 'use client'
 
+import { useState, useEffect } from 'react'
 import { Button } from "@/components/ui/button"
 import { useAuth } from "@/lib/hooks/useAuth"
 import { useRecordings } from "@/lib/hooks/useRecordings"
@@ -14,6 +15,7 @@ import { DashboardHeader } from '@/components/dashboard-header'
 import { StatsGrid } from '@/components/stats-grid'
 import { RecentActivity } from '@/components/recent-activity'
 import Link from "next/link"
+import { AlertCircle, ArrowRight, X } from "lucide-react"
 
 export default function DashboardPage() {
   const { user, loading: authLoading } = useAuth()
@@ -22,6 +24,36 @@ export default function DashboardPage() {
   const { subscription, trialUsage, loading: subscriptionLoading } = useSubscription()
   const router = useRouter()
   const supabase = createClient()
+  
+  // Onboarding banner state
+  const [onboardingDone, setOnboardingDone] = useState<boolean | null>(null)
+  const [showBanner, setShowBanner] = useState(true)
+
+  // Fetch onboarding status
+  useEffect(() => {
+    const fetchOnboardingStatus = async () => {
+      if (!user) return
+      
+      try {
+        const { data, error } = await supabase
+          .from('profiles')
+          .select('onboarding_done')
+          .eq('id', user.id)
+          .single()
+
+        if (error) {
+          console.error('Error fetching onboarding status:', error)
+          return
+        }
+
+        setOnboardingDone(data?.onboarding_done || false)
+      } catch (error) {
+        console.error('Error:', error)
+      }
+    }
+
+    fetchOnboardingStatus()
+  }, [user, supabase])
 
   const handleSignOut = async () => {
     try {
@@ -61,6 +93,45 @@ export default function DashboardPage() {
   return (
     <div className="min-h-screen bg-background pb-16 md:pb-0">
       <DashboardHeader />
+
+      {/* Onboarding Banner */}
+      {onboardingDone === false && showBanner && (
+        <div className="bg-yellow-50 border-b border-yellow-200">
+          <div className="mx-auto max-w-7xl px-6 py-4 md:px-8 lg:px-12">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <AlertCircle className="h-5 w-5 text-yellow-600" />
+                <div>
+                  <p className="text-sm font-medium text-yellow-800">
+                    Complete your setup to get personalized content
+                  </p>
+                  <p className="text-xs text-yellow-700">
+                    Tell us about your goals and get better AI-generated posts
+                  </p>
+                </div>
+              </div>
+              <div className="flex items-center gap-2">
+                <Button
+                  size="sm"
+                  onClick={() => router.push('/onboarding')}
+                  className="bg-yellow-600 hover:bg-yellow-700 text-white"
+                >
+                  Complete Setup
+                  <ArrowRight className="ml-1 h-3 w-3" />
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setShowBanner(false)}
+                  className="text-yellow-600 hover:text-yellow-700 hover:bg-yellow-100"
+                >
+                  <X className="h-4 w-4" />
+                </Button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       <main className="mx-auto max-w-7xl px-6 py-8 md:px-8 lg:px-12">
 

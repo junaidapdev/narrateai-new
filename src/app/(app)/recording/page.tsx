@@ -363,44 +363,34 @@ export default function RecordingPage() {
   }
 
   return (
-    <div className="min-h-screen bg-background pb-16 md:pb-0">
+    <div className="min-h-screen bg-background">
       <DashboardHeader />
 
       {/* Main Content */}
-      <main className="mx-auto max-w-7xl px-6 py-12 md:px-8 lg:px-12">
-        {/* <div className="mb-16 text-center">
-          <h1 className="font-serif text-5xl font-medium leading-tight tracking-tight text-foreground md:text-6xl lg:text-7xl text-balance">
-            Record your thoughts
-          </h1>
-          <p className="mx-auto mt-6 max-w-2xl text-lg text-muted-foreground leading-relaxed">
-            Speak naturally and let AI transform your voice into engaging content
-          </p>
-        </div> */}
-
-
-        <div className="max-w-4xl mx-auto mb-20">
+      <main className="mx-auto max-w-7xl px-4 py-6 pb-24 md:px-8 lg:px-12 md:py-12 md:pb-12">
+        <div className="max-w-4xl mx-auto">
           {/* Recording Interface */}
-            <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-12 text-center">
-              {/* Main Title */}
-              <h1 className="text-4xl md:text-5xl lg:text-6xl font-serif font-medium text-foreground mb-6 leading-tight">
-                Speak<br />your mind
-              </h1>
-              
-              {/* Description */}
-              <p className="text-lg text-muted-foreground mb-12 max-w-2xl mx-auto leading-relaxed">
-                Press the button and start talking. We'll transform your thoughts into a polished LinkedIn post.
-              </p>
+          <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 md:p-12 text-center">
+            {/* Main Title */}
+            <h1 className="text-3xl md:text-5xl lg:text-6xl font-serif font-medium text-foreground mb-4 md:mb-6 leading-tight">
+              Speak<br />your mind
+            </h1>
+            
+            {/* Description */}
+            <p className="text-base md:text-lg text-muted-foreground mb-8 md:mb-12 max-w-2xl mx-auto leading-relaxed">
+              Press the button and start talking. We'll transform your thoughts into a polished LinkedIn post.
+            </p>
 
-              {/* Recording Timer */}
-              <div className="text-center mb-12">
-                <div className="text-3xl md:text-4xl lg:text-5xl font-mono font-bold text-foreground mb-4">
-                  {formatTime(recordingTime)}
+            {/* Recording Timer */}
+            <div className="text-center mb-8 md:mb-12">
+              <div className="text-2xl md:text-4xl lg:text-5xl font-mono font-bold text-foreground mb-3 md:mb-4">
+                {formatTime(recordingTime)}
+              </div>
+              {isRecording && (
+                <div className="text-sm text-muted-foreground">
+                  {isPaused ? 'Paused' : 'Recording...'}
                 </div>
-                {isRecording && (
-                  <div className="text-sm text-muted-foreground">
-                    {isPaused ? 'Paused' : 'Recording...'}
-                  </div>
-                )}
+              )}
                   
                 {/* Trial Limit Warning */}
                 {isRecording && trialUsage && trialUsage.is_trial && (
@@ -447,92 +437,92 @@ export default function RecordingPage() {
                 </div>
               )}
 
-              {/* Recording Controls */}
-              <div className="flex justify-center mb-8">
-                {!isRecording ? (
+            {/* Recording Controls - Mobile Optimized */}
+            <div className="flex justify-center mb-6 md:mb-12">
+              {!isRecording ? (
+                <Button
+                  onClick={startRecording}
+                  className="w-24 h-24 md:w-20 md:h-20 bg-primary hover:bg-primary/90 text-primary-foreground rounded-full flex items-center justify-center shadow-lg hover:shadow-xl transition-all duration-200"
+                  size="lg"
+                >
+                  <Mic className="h-10 w-10 md:h-8 md:w-8" />
+                </Button>
+              ) : (
+                <div className="flex flex-row items-center gap-8">
+                  {/* Pause/Resume Button */}
                   <Button
-                    onClick={startRecording}
-                    className="w-16 h-16 sm:w-16 sm:h-16 bg-primary hover:bg-primary/90 text-primary-foreground rounded-full flex items-center justify-center shadow-lg hover:shadow-xl transition-all duration-200"
+                    onClick={pauseRecording}
+                    className="w-20 h-20 md:w-16 md:h-16 bg-yellow-500 hover:bg-yellow-600 text-white rounded-full flex items-center justify-center shadow-lg hover:shadow-xl transition-all duration-200"
                     size="lg"
                   >
-                    <Mic className="h-6 w-6" />
+                    {isPaused ? <Play className="h-8 w-8 md:h-7 md:w-7" /> : <Pause className="h-8 w-8 md:h-7 md:w-7" />}
                   </Button>
-                ) : (
-                  <div className="flex flex-row items-center gap-4">
-                    {/* Pause/Resume Button */}
-                    <Button
-                      onClick={pauseRecording}
-                      className="w-14 h-14 sm:w-12 sm:h-12 bg-yellow-500 hover:bg-yellow-600 text-white rounded-full flex items-center justify-center shadow-lg hover:shadow-xl transition-all duration-200"
-                      size="lg"
-                    >
-                      {isPaused ? <Play className="h-6 w-6 sm:h-5 sm:w-5" /> : <Pause className="h-6 w-6 sm:h-5 sm:w-5" />}
-                    </Button>
-                    
-                    {/* Stop Button */}
-                    <Button
-                      onClick={stopRecording}
-                      className="w-14 h-14 sm:w-12 sm:h-12 bg-red-500 hover:bg-red-600 text-white rounded-full flex items-center justify-center shadow-lg hover:shadow-xl transition-all duration-200"
-                      size="lg"
-                    >
-                      <Square className="h-6 w-6 sm:h-5 sm:w-5" />
-                    </Button>
-                  </div>
-                )}
-              </div>
-
-              {/* Call to Action */}
-              {!isRecording && (
-                <p className="text-sm text-muted-foreground mb-8">
-                  Click to start recording
-                </p>
-              )}
-              
-              {/* Recording Status */}
-              {isRecording && (
-                <div className="text-center mb-8">
-                  <p className="text-sm text-muted-foreground mb-2">
-                    {isPaused ? 'Recording paused' : 'Recording in progress...'}
-                  </p>
-                  <div className="flex justify-center space-x-2 text-xs text-muted-foreground/70">
-                    <span>Tap to pause</span>
-                    <span>•</span>
-                    <span>Tap to stop</span>
-                  </div>
+                  
+                  {/* Stop Button */}
+                  <Button
+                    onClick={stopRecording}
+                    className="w-20 h-20 md:w-16 md:h-16 bg-red-500 hover:bg-red-600 text-white rounded-full flex items-center justify-center shadow-lg hover:shadow-xl transition-all duration-200"
+                    size="lg"
+                  >
+                    <Square className="h-8 w-8 md:h-7 md:w-7" />
+                  </Button>
                 </div>
               )}
+            </div>
 
-              {/* Recording Actions */}
-              {audioBlob && (
-                <div className="space-y-6 pt-8 border-t border-gray-200">
-                    {/* Playback Controls */}
-                    <div className="flex justify-center items-center space-x-4 mb-6">
-                      <Button
-                        onClick={isPlaying ? pausePlayback : playRecording}
-                        className="bg-primary hover:bg-primary/90 text-primary-foreground px-4 py-2 rounded-lg shadow-sm hover:shadow-md transition-all duration-200"
-                        size="sm"
-                      >
-                        {isPlaying ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />}
-                      </Button>
-                      <Button
-                        onClick={resetRecording}
-                        className="bg-red-50 hover:bg-red-100 text-red-600 border border-red-200 px-4 py-2 rounded-lg shadow-sm hover:shadow-md transition-all duration-200"
-                        size="sm"
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    </div>
-                    
-                    {/* Done Button */}
-                    <Button 
-                      onClick={saveRecording}
-                      className="bg-primary hover:bg-primary/90 text-primary-foreground px-6 py-2 rounded-lg shadow-sm hover:shadow-md transition-all duration-200 font-medium"
-                    >
-                      <Save className="h-4 w-4 mr-2" />
-                      <span className="hidden sm:inline">Process Audio</span>
-                      <span className="sm:hidden">Process</span>
-                    </Button>
-                  </div>
-                )}
+            {/* Call to Action */}
+            {!isRecording && (
+              <p className="text-sm text-muted-foreground mb-6 md:mb-8">
+                Click to start recording
+              </p>
+            )}
+            
+            {/* Recording Status */}
+            {isRecording && (
+              <div className="text-center mb-8 md:mb-12">
+                <p className="text-sm text-muted-foreground mb-2">
+                  {isPaused ? 'Recording paused' : 'Recording in progress...'}
+                </p>
+                <div className="flex justify-center space-x-2 text-xs text-muted-foreground/70">
+                  <span>Tap to pause</span>
+                  <span>•</span>
+                  <span>Tap to stop</span>
+                </div>
+              </div>
+            )}
+
+            {/* Recording Actions */}
+            {audioBlob && (
+              <div className="space-y-6 pt-6 md:pt-8 border-t border-gray-200 pb-6 md:pb-8">
+                {/* Playback Controls */}
+                <div className="flex justify-center items-center space-x-4 mb-6">
+                  <Button
+                    onClick={isPlaying ? pausePlayback : playRecording}
+                    className="bg-primary hover:bg-primary/90 text-primary-foreground px-4 py-2 rounded-lg shadow-sm hover:shadow-md transition-all duration-200"
+                    size="sm"
+                  >
+                    {isPlaying ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />}
+                  </Button>
+                  <Button
+                    onClick={resetRecording}
+                    className="bg-red-50 hover:bg-red-100 text-red-600 border border-red-200 px-4 py-2 rounded-lg shadow-sm hover:shadow-md transition-all duration-200"
+                    size="sm"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                </div>
+                
+                {/* Done Button */}
+                <Button 
+                  onClick={saveRecording}
+                  className="bg-primary hover:bg-primary/90 text-primary-foreground px-6 py-2 rounded-lg shadow-sm hover:shadow-md transition-all duration-200 font-medium"
+                >
+                  <Save className="h-4 w-4 mr-2" />
+                  <span className="hidden sm:inline">Process Audio</span>
+                  <span className="sm:hidden">Process</span>
+                </Button>
+              </div>
+            )}
 
                 {/* Hidden Audio Element */}
                 {audioUrl && (
@@ -550,7 +540,9 @@ export default function RecordingPage() {
       </main>
 
       {/* Mobile Bottom Navigation */}
-      <MobileBottomNav />
+      <div className="fixed bottom-0 left-0 right-0 z-50">
+        <MobileBottomNav />
+      </div>
 
       {/* Paywall Modal */}
       <PaywallModal

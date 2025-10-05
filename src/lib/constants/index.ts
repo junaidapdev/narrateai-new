@@ -63,7 +63,7 @@ export const SUBSCRIPTION_PLANS = {
   },
   pro: {
     name: 'Pro',
-    price: 29,
+    price: 17,
     features: [
       'Unlimited recordings',
       'Advanced transcription',

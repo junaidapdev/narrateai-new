@@ -15,17 +15,53 @@ export class ContentGenerationService {
     })
   }
 
-  async generatePostFromTranscription(transcription: string): Promise<{ title: string; hook: string; body: string; call_to_action: string }> {
+  async generatePostFromTranscription(
+    transcription: string, 
+    userContext?: { 
+      linkedinGoal?: string; 
+      backStory?: string; 
+    }
+  ): Promise<{ title: string; hook: string; body: string; call_to_action: string }> {
     try {
       console.log('=== CONTENT GENERATION START ===')
       console.log('Input transcription:', transcription)
       console.log('Transcription length:', transcription.length)
+      console.log('User context:', userContext)
       
-      const systemPrompt = `You are an expert LinkedIn content strategist who transforms voice transcriptions into high-engagement posts. You MUST respond with valid JSON only.`
+      // Build personalized system prompt
+      let systemPrompt = `You are an expert LinkedIn content strategist who transforms voice transcriptions into high-engagement posts. You MUST respond with valid JSON only.`
+      
+      if (userContext?.linkedinGoal || userContext?.backStory) {
+        systemPrompt += `\n\nPERSONALIZATION CONTEXT:`
+        
+        if (userContext.linkedinGoal) {
+          const goalDescriptions = {
+            'brand': 'building a personal brand and establishing thought leadership',
+            'hire': 'attracting and recruiting top talent',
+            'raise': 'connecting with investors and securing funding',
+            'sell': 'generating leads and driving sales'
+          }
+          systemPrompt += `\n- User's LinkedIn goal: ${goalDescriptions[userContext.linkedinGoal as keyof typeof goalDescriptions] || userContext.linkedinGoal}`
+        }
+        
+        if (userContext.backStory) {
+          systemPrompt += `\n- User's background: ${userContext.backStory}`
+        }
+        
+        systemPrompt += `\n\nUse this context to tailor the content style, tone, and messaging to align with the user's goals and background. Make the content feel authentic to their voice and professional journey.`
+      }
       
       const userPrompt = `Transform this voice transcription into a viral LinkedIn post following these exact rules:
 
 CRITICAL: You MUST respond with ONLY a valid JSON object. No other text before or after.
+
+${userContext?.linkedinGoal || userContext?.backStory ? `
+## PERSONALIZATION REQUIREMENTS
+- Tailor the content to align with the user's LinkedIn goals and professional background
+- Use language and examples that resonate with their industry and experience level
+- Ensure the tone matches their professional voice and journey
+- Make the content feel authentic to their specific situation and goals
+` : ''}
 
 ## STYLE RULES
 
@@ -172,22 +208,53 @@ NOW GENERATE THE POST. RESPOND WITH JSON ONLY.`
     }
   }
 
-  async generateAlternativeTitles(transcription: string, count: number = 3): Promise<string[]> {
+  async generateAlternativeTitles(
+    transcription: string, 
+    count: number = 3,
+    userContext?: { 
+      linkedinGoal?: string; 
+      backStory?: string; 
+    }
+  ): Promise<string[]> {
     try {
+      // Build personalized title generation prompt
+      let titleSystemPrompt = "You create engaging LinkedIn post titles. Respond with JSON only."
+      let titleUserPrompt = `Generate ${count} alternative catchy titles (max 60 chars each) for this transcription:
+
+"${transcription}"`
+
+      if (userContext?.linkedinGoal || userContext?.backStory) {
+        titleSystemPrompt += `\n\nPERSONALIZATION: Tailor titles to match the user's LinkedIn goals and professional background.`
+        
+        if (userContext.linkedinGoal) {
+          const goalDescriptions = {
+            'brand': 'personal branding and thought leadership',
+            'hire': 'talent acquisition and recruitment',
+            'raise': 'fundraising and investor relations',
+            'sell': 'sales and lead generation'
+          }
+          titleUserPrompt += `\n\nUser's LinkedIn goal: ${goalDescriptions[userContext.linkedinGoal as keyof typeof goalDescriptions] || userContext.linkedinGoal}`
+        }
+        
+        if (userContext.backStory) {
+          titleUserPrompt += `\nUser's background: ${userContext.backStory}`
+        }
+        
+        titleUserPrompt += `\n\nMake titles relevant to their specific goals and professional context.`
+      }
+
+      titleUserPrompt += `\n\nRespond with JSON: {"titles": ["title1", "title2", "title3"]}`
+
       const completion = await this.client.chat.completions.create({
         model: "gpt-4o-mini",
         messages: [
           {
             role: "system",
-            content: "You create engaging LinkedIn post titles. Respond with JSON only."
+            content: titleSystemPrompt
           },
           {
             role: "user",
-            content: `Generate ${count} alternative catchy titles (max 60 chars each) for this transcription:
-
-"${transcription}"
-
-Respond with JSON: {"titles": ["title1", "title2", "title3"]}`
+            content: titleUserPrompt
           }
         ],
         response_format: { type: "json_object" },

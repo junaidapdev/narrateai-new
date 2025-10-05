@@ -11,7 +11,7 @@ import Link from "next/link"
 import { useAuth } from "@/lib/hooks/useAuth"
 import { usePosts } from "@/lib/hooks/usePosts"
 import { formatDate } from "@/lib/utils"
-import { FileText, Edit, Trash2, Eye, Archive, Copy } from "lucide-react"
+import { FileText, Edit, Trash2, Eye, Copy } from "lucide-react"
 import { toast } from 'sonner'
 import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
@@ -20,12 +20,13 @@ import { DashboardHeader } from '@/components/dashboard-header'
 
 export default function PostsPage() {
   const { user, loading: authLoading } = useAuth()
-  const { posts, loading: postsLoading, createPost, updatePost, deletePost, publishPost, archivePost } = usePosts()
+  const { posts, loading: postsLoading, createPost, updatePost, deletePost, publishPost } = usePosts()
   const [editingPost, setEditingPost] = useState<string | null>(null)
   const [editTitle, setEditTitle] = useState('')
   const [editHook, setEditHook] = useState('')
   const [editBody, setEditBody] = useState('')
   const [editCallToAction, setEditCallToAction] = useState('')
+  const [activeFilter, setActiveFilter] = useState('Draft')
   const router = useRouter()
   const supabase = createClient()
 
@@ -140,14 +141,6 @@ export default function PostsPage() {
     }
   }
 
-  const handleArchivePost = async (id: string) => {
-    try {
-      await archivePost(id)
-      toast.success('Post archived successfully!')
-    } catch (error) {
-      toast.error('Failed to archive post')
-    }
-  }
 
   const getStatusBadge = (status: string) => {
     switch (status) {
@@ -155,12 +148,18 @@ export default function PostsPage() {
         return <Badge className="bg-green-100 text-green-800">Published</Badge>
       case 'draft':
         return <Badge className="bg-yellow-100 text-yellow-800">Draft</Badge>
-      case 'archived':
-        return <Badge className="bg-gray-100 text-gray-800">Archived</Badge>
       default:
         return <Badge className="bg-gray-100 text-gray-800">Unknown</Badge>
     }
   }
+
+  // Filter posts based on active filter
+  const filteredPosts = posts.filter(post => {
+    if (activeFilter === 'All') return true
+    if (activeFilter === 'Published') return post.status === 'published'
+    if (activeFilter === 'Draft') return post.status === 'draft'
+    return true
+  })
 
   return (
     <div className="min-h-screen bg-background pb-16 md:pb-0">
@@ -182,11 +181,12 @@ export default function PostsPage() {
         {/* Filter Tabs */}
         <div className="mb-6">
           <div className="flex space-x-6 border-b border-gray-200">
-            {['All', 'Published', 'Draft', 'Archived'].map((filter) => (
+            {['Draft', 'Published', 'All'].map((filter) => (
               <button
                 key={filter}
+                onClick={() => setActiveFilter(filter)}
                 className={`pb-2 text-sm font-medium transition-colors ${
-                  filter === 'All' 
+                  activeFilter === filter
                     ? 'text-gray-900 border-b-2 border-gray-900' 
                     : 'text-gray-500 hover:text-gray-700'
                 }`}
@@ -196,7 +196,7 @@ export default function PostsPage() {
             ))}
           </div>
           <div className="mt-2">
-            <span className="text-sm text-gray-500">{posts.length} posts</span>
+            <span className="text-sm text-gray-500">{filteredPosts.length} posts</span>
           </div>
         </div>
 
@@ -207,17 +207,19 @@ export default function PostsPage() {
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900 mx-auto"></div>
             <p className="mt-4 text-gray-600">Loading posts...</p>
           </div>
-        ) : posts.length === 0 ? (
+        ) : filteredPosts.length === 0 ? (
           <div className="text-center py-12">
             <FileText className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-            <p className="text-gray-600 mb-4">No posts yet</p>
+            <p className="text-gray-600 mb-4">
+              {activeFilter === 'All' ? 'No posts yet' : `No ${activeFilter.toLowerCase()} posts`}
+            </p>
             <p className="text-sm text-gray-500">
-              Create your first post to get started
+              {activeFilter === 'All' ? 'Create your first post to get started' : `Try switching to a different filter`}
             </p>
           </div>
         ) : (
           <div className="space-y-4">
-            {posts.map((post) => (
+            {filteredPosts.map((post) => (
               <div key={post.id} className="bg-white border border-gray-200 rounded-xl shadow-sm hover:shadow-md transition-shadow duration-200">
                     {editingPost === post.id ? (
                       // Edit Mode
@@ -292,11 +294,11 @@ export default function PostsPage() {
                                 post.status === 'published' 
                                   ? 'bg-green-100 text-green-800 border-green-200' 
                                   : post.status === 'draft'
-                                  ? 'bg-yellow-100 text-yellow-800 border-yellow-200'
+                                  ? 'bg-orange-100 text-orange-800 border-orange-200'
                                   : 'bg-gray-100 text-gray-800 border-gray-200'
                               }`}
                             >
-                              {post.status}
+                              {post.status === 'published' ? 'Published' : post.status === 'draft' ? 'Draft' : post.status}
                             </Badge>
                             <div className="flex items-center space-x-1">
                                 <Button
@@ -322,21 +324,10 @@ export default function PostsPage() {
                                     variant="ghost"
                                     size="sm"
                                     onClick={() => handlePublishPost(post.id)}
-                                    title="Publish post"
-                                    className="text-green-600 hover:text-green-700 hover:bg-green-50 px-1 py-1 h-7 w-7"
+                                    title="Publish this draft"
+                                    className="bg-green-600 hover:bg-green-700 text-white px-3 py-1 h-7 text-xs font-medium"
                                   >
-                                    <Eye className="h-3 w-3" />
-                                  </Button>
-                                )}
-                                {post.status === 'published' && (
-                                  <Button
-                                    variant="ghost"
-                                    size="sm"
-                                    onClick={() => handleArchivePost(post.id)}
-                                    title="Archive post"
-                                    className="text-yellow-600 hover:text-yellow-700 hover:bg-yellow-50 px-1 py-1 h-7 w-7"
-                                  >
-                                    <Archive className="h-3 w-3" />
+                                    Publish
                                   </Button>
                                 )}
                                 <Button

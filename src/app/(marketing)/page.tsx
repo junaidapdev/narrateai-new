@@ -26,7 +26,7 @@ export default function LandingPage() {
       {/* Hero Section */}
       <section className="max-w-4xl mx-auto px-4 py-16 text-center">
         <h1 className="text-4xl md:text-6xl font-bold text-black mb-6 leading-tight">
-          Your best LinkedIn posts are hiding in your morning shower thoughts. Test Test
+          Your best LinkedIn posts are hiding in your morning shower thoughts. 
         </h1>
         <p className="text-lg md:text-xl text-gray-600 mb-8 max-w-2xl mx-auto">
           Turn rambling voice notes into viral LinkedIn posts. Just talk for 30 seconds. AI does the rest.
@@ -195,27 +195,27 @@ export default function LandingPage() {
           </div>
           <div className="border border-primary p-8">
             <h3 className="text-2xl font-semibold text-black mb-2">Pro</h3>
-            <div className="text-4xl font-bold text-black mb-6">$29<span className="text-lg text-gray-600">/month</span></div>
+            <div className="text-4xl font-bold text-black mb-6">$17<span className="text-lg text-gray-600">/month</span></div>
             <ul className="space-y-3 mb-8">
               <li className="flex items-center text-gray-600">
                 <span className="text-primary mr-2">✓</span>
-                Unlimited recordings
+                Unlimited voice recordings
               </li>
               <li className="flex items-center text-gray-600">
                 <span className="text-primary mr-2">✓</span>
-                Advanced AI with custom prompts
+                AI-powered LinkedIn posts
               </li>
               <li className="flex items-center text-gray-600">
                 <span className="text-primary mr-2">✓</span>
-                Multiple platform support
+                Personalized content based on your goals
               </li>
               <li className="flex items-center text-gray-600">
                 <span className="text-primary mr-2">✓</span>
-                Priority processing
+                Edit and refine generated posts
               </li>
               <li className="flex items-center text-gray-600">
                 <span className="text-primary mr-2">✓</span>
-                Analytics dashboard
+                Cancel anytime
               </li>
             </ul>
             <Button className="w-full bg-primary hover:bg-primary/90 text-white">

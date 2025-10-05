@@ -240,7 +240,7 @@ function PricingContent() {
                 Perfect for getting started
               </CardDescription>
               <div className="mt-4">
-                <span className="text-4xl font-bold text-foreground">$29</span>
+                <span className="text-4xl font-bold text-foreground">$17</span>
                 <span className="text-muted-foreground">/month</span>
               </div>
             </CardHeader>
@@ -248,23 +248,23 @@ function PricingContent() {
               <div className="space-y-4">
                 <div className="flex items-center gap-3">
                   <Check className="h-5 w-5 text-green-600" />
-                  <span className="text-foreground">Unlimited recordings</span>
+                  <span className="text-foreground">Unlimited voice recordings</span>
                 </div>
                 <div className="flex items-center gap-3">
                   <Check className="h-5 w-5 text-green-600" />
-                  <span className="text-foreground">AI-powered content generation</span>
+                  <span className="text-foreground">AI-powered LinkedIn posts</span>
                 </div>
                 <div className="flex items-center gap-3">
                   <Check className="h-5 w-5 text-green-600" />
-                  <span className="text-foreground">LinkedIn post optimization</span>
+                  <span className="text-foreground">Personalized content based on your goals</span>
                 </div>
                 <div className="flex items-center gap-3">
                   <Check className="h-5 w-5 text-green-600" />
-                  <span className="text-foreground">Priority support</span>
+                  <span className="text-foreground">Edit and refine generated posts</span>
                 </div>
                 <div className="flex items-center gap-3">
                   <Check className="h-5 w-5 text-green-600" />
-                  <span className="text-foreground">Mobile app access</span>
+                  <span className="text-foreground">Cancel anytime</span>
                 </div>
               </div>
               <Button 
@@ -288,10 +288,10 @@ function PricingContent() {
                 Save 2 months with yearly billing
               </CardDescription>
               <div className="mt-4">
-                <span className="text-4xl font-bold text-foreground">$290</span>
+                <span className="text-4xl font-bold text-foreground">$156</span>
                 <span className="text-muted-foreground">/year</span>
                 <div className="text-sm text-green-600 font-medium mt-1">
-                  Save $58 compared to monthly
+                  Save $48 compared to monthly
                 </div>
               </div>
             </CardHeader>
@@ -299,23 +299,23 @@ function PricingContent() {
               <div className="space-y-4">
                 <div className="flex items-center gap-3">
                   <Check className="h-5 w-5 text-green-600" />
-                  <span className="text-foreground">Everything in Monthly</span>
+                  <span className="text-foreground">Unlimited voice recordings</span>
                 </div>
                 <div className="flex items-center gap-3">
                   <Check className="h-5 w-5 text-green-600" />
-                  <span className="text-foreground">Advanced analytics</span>
+                  <span className="text-foreground">AI-powered LinkedIn posts</span>
                 </div>
                 <div className="flex items-center gap-3">
                   <Check className="h-5 w-5 text-green-600" />
-                  <span className="text-foreground">Custom templates</span>
+                  <span className="text-foreground">Personalized content based on your goals</span>
                 </div>
                 <div className="flex items-center gap-3">
                   <Check className="h-5 w-5 text-green-600" />
-                  <span className="text-foreground">Team collaboration</span>
+                  <span className="text-foreground">Edit and refine generated posts</span>
                 </div>
                 <div className="flex items-center gap-3">
                   <Check className="h-5 w-5 text-green-600" />
-                  <span className="text-foreground">API access</span>
+                  <span className="text-foreground">Cancel anytime</span>
                 </div>
               </div>
               <Button 

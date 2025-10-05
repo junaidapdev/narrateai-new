@@ -94,7 +94,7 @@ export default function Home() {
         <div className="mx-auto max-w-7xl px-6 md:px-8 lg:px-12">
           <div className="mx-auto max-w-4xl text-center">
             <h1 className="text-4xl font-serif font-bold tracking-tight text-foreground sm:text-6xl">
-            Your voice. LinkedIn posts. Zero writing.
+            Your voice. <br /> LinkedIn posts. <br /> Zero writing.
               <span className="block text-primary"></span>
             </h1>
             <p className="mt-6 text-lg leading-8 text-muted-foreground max-w-2xl mx-auto">
@@ -445,6 +445,107 @@ export default function Home() {
                 </p>
               </div>
             </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Pricing Section */}
+      <section className="py-24 sm:py-32 bg-muted/30">
+        <div className="mx-auto max-w-7xl px-6 md:px-8 lg:px-12">
+          <div className="mx-auto max-w-2xl text-center mb-16">
+            <h2 className="text-3xl font-serif font-bold tracking-tight text-foreground sm:text-4xl">
+              Simple, transparent pricing
+            </h2>
+            <p className="mt-6 text-lg leading-8 text-muted-foreground">
+              Start free, upgrade when you're ready. No hidden fees, no surprises.
+            </p>
+          </div>
+
+          <div className="grid md:grid-cols-2 gap-8 max-w-4xl mx-auto">
+            {/* Free Trial */}
+            <div className="bg-white rounded-2xl border border-border shadow-sm p-8">
+              <div className="text-center">
+                <h3 className="text-2xl font-serif font-bold text-foreground mb-2">Free Trial</h3>
+                <p className="text-muted-foreground mb-6">Perfect for getting started</p>
+                <div className="mb-8">
+                  <span className="text-4xl font-bold text-foreground">$0</span>
+                  <span className="text-muted-foreground">/month</span>
+                </div>
+                <ul className="space-y-4 text-left mb-8">
+                  <li className="flex items-center gap-3">
+                    <Check className="h-5 w-5 text-green-600" />
+                    <span className="text-muted-foreground">5 recordings per month</span>
+                  </li>
+                  <li className="flex items-center gap-3">
+                    <Check className="h-5 w-5 text-green-600" />
+                    <span className="text-muted-foreground">AI content generation</span>
+                  </li>
+                  <li className="flex items-center gap-3">
+                    <Check className="h-5 w-5 text-green-600" />
+                    <span className="text-muted-foreground">Mobile recording</span>
+                  </li>
+                  <li className="flex items-center gap-3">
+                    <Check className="h-5 w-5 text-green-600" />
+                    <span className="text-muted-foreground">Basic analytics</span>
+                  </li>
+                </ul>
+                <Link href="/signup">
+                  <Button className="w-full bg-primary hover:bg-primary/90 text-primary-foreground">
+                    Start Free Trial
+                  </Button>
+                </Link>
+              </div>
+            </div>
+
+            {/* Pro Plan */}
+            <div className="bg-white rounded-2xl border-2 border-primary shadow-lg p-8 relative">
+              <div className="absolute -top-4 left-1/2 transform -translate-x-1/2">
+                <span className="bg-primary text-primary-foreground px-4 py-1 rounded-full text-sm font-medium">
+                  Most Popular
+                </span>
+              </div>
+              <div className="text-center">
+                <h3 className="text-2xl font-serif font-bold text-foreground mb-2">Pro</h3>
+                <p className="text-muted-foreground mb-6">For serious content creators</p>
+                <div className="mb-8">
+                  <span className="text-4xl font-bold text-foreground">$17</span>
+                  <span className="text-muted-foreground">/month</span>
+                </div>
+                <ul className="space-y-4 text-left mb-8">
+                  <li className="flex items-center gap-3">
+                    <Check className="h-5 w-5 text-green-600" />
+                    <span className="text-muted-foreground">Unlimited voice recordings</span>
+                  </li>
+                  <li className="flex items-center gap-3">
+                    <Check className="h-5 w-5 text-green-600" />
+                    <span className="text-muted-foreground">AI-powered LinkedIn posts</span>
+                  </li>
+                  <li className="flex items-center gap-3">
+                    <Check className="h-5 w-5 text-green-600" />
+                    <span className="text-muted-foreground">Personalized content based on your goals</span>
+                  </li>
+                  <li className="flex items-center gap-3">
+                    <Check className="h-5 w-5 text-green-600" />
+                    <span className="text-muted-foreground">Edit and refine generated posts</span>
+                  </li>
+                  <li className="flex items-center gap-3">
+                    <Check className="h-5 w-5 text-green-600" />
+                    <span className="text-muted-foreground">Cancel anytime</span>
+                  </li>
+                </ul>
+                <Link href="/pricing">
+                  <Button className="w-full bg-primary hover:bg-primary/90 text-primary-foreground">
+                    Choose Pro
+                  </Button>
+                </Link>
+              </div>
+            </div>
+          </div>
+
+          <div className="text-center mt-12">
+            <p className="text-sm text-muted-foreground">
+              All plans include 30-day money-back guarantee
+            </p>
           </div>
         </div>
       </section>
