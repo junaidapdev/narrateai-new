@@ -1,4 +1,4 @@
-# Narrate AI
+# Narrate 
 
 Transform your voice into engaging content with AI-powered transcription and content generation.
 

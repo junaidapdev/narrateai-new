@@ -387,7 +387,7 @@ export default function SettingsPage() {
                     {/* Referral Source */}
                     <div className="space-y-2">
                       <Label htmlFor="referral-source" className="text-sm font-medium text-foreground">
-                        How did you hear about Narrate AI?
+                        How did you hear about Narrate?
                       </Label>
                       <Select value={referralSource} onValueChange={setReferralSource}>
                         <SelectTrigger className="bg-background border-border focus:border-primary focus:ring-primary/20">

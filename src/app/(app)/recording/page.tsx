@@ -21,7 +21,7 @@ import { DashboardHeader } from '@/components/dashboard-header'
 
 export default function RecordingPage() {
   const { user, loading: authLoading } = useAuth()
-  const { createRecording } = useRecordings()
+  const { createRecording, recordings, loading: recordingsLoading } = useRecordings()
   const { subscription, trialUsage, updateTrialUsage } = useSubscription()
   
   // Recording states
@@ -39,6 +39,9 @@ export default function RecordingPage() {
   
   // Subscription states
   const [showPaywall, setShowPaywall] = useState(false)
+  
+  // Recent recordings playback states
+  const [playingRecordingId, setPlayingRecordingId] = useState<string | null>(null)
   
   // Refs
   const mediaRecorderRef = useRef<MediaRecorder | null>(null)
@@ -79,6 +82,60 @@ export default function RecordingPage() {
       router.push('/')
     } catch (error) {
       toast.error('Failed to sign out')
+    }
+  }
+
+  // Recent recordings playback function
+  const playRecentRecording = async (recording: any) => {
+    try {
+      // Stop any currently playing recording
+      if (playingRecordingId && playingRecordingId !== recording.id) {
+        const currentAudio = document.getElementById(`audio-${playingRecordingId}`) as HTMLAudioElement
+        if (currentAudio) {
+          currentAudio.pause()
+          currentAudio.currentTime = 0
+        }
+      }
+
+      // If clicking the same recording, toggle play/pause
+      if (playingRecordingId === recording.id) {
+        const audio = document.getElementById(`audio-${recording.id}`) as HTMLAudioElement
+        if (audio) {
+          if (audio.paused) {
+            audio.play()
+          } else {
+            audio.pause()
+          }
+        }
+        return
+      }
+
+      // Play new recording
+      setPlayingRecordingId(recording.id)
+      
+      // Create audio element if it doesn't exist
+      let audio = document.getElementById(`audio-${recording.id}`) as HTMLAudioElement
+      if (!audio) {
+        audio = new Audio(recording.audio_url)
+        audio.id = `audio-${recording.id}`
+        audio.preload = 'metadata'
+        document.body.appendChild(audio)
+        
+        audio.addEventListener('ended', () => {
+          setPlayingRecordingId(null)
+        })
+        
+        audio.addEventListener('error', () => {
+          toast.error('Failed to load audio')
+          setPlayingRecordingId(null)
+        })
+      }
+      
+      audio.play()
+    } catch (error) {
+      console.error('Error playing recording:', error)
+      toast.error('Failed to play recording')
+      setPlayingRecordingId(null)
     }
   }
 
@@ -290,22 +347,16 @@ export default function RecordingPage() {
       // Create recording with default title
       const defaultTitle = `Recording ${new Date().toLocaleString()}`
       
-      console.log('Creating recording with data:', {
-        title: defaultTitle,
-        description: null,
-        audio_url: urlData.publicUrl,
-        status: 'processing',
-        user_id: user.id,
-      })
       
       const result = await createRecording({
         title: defaultTitle,
         audio_url: urlData.publicUrl,
+        duration: recordingTime, // Save duration in seconds
         status: 'processing',
         user_id: user.id,
       })
 
-      console.log('Recording created successfully:', result)
+      // console.log('Recording created successfully:', result)
       
       // Update trial usage if user is on trial
       if (trialUsage && trialUsage.is_trial) {
@@ -536,6 +587,101 @@ export default function RecordingPage() {
                   />
                 )}
               </div>
+        </div>
+
+        {/* Recent Recordings Section */}
+        <div className="mt-8 md:mt-12">
+          <div className="flex items-center justify-between mb-6">
+            <h2 className="text-xl md:text-2xl font-serif font-medium text-foreground">
+              Recent Recordings
+            </h2>
+            <Link href="/posts">
+              <Button variant="outline" size="sm">
+                View All
+              </Button>
+            </Link>
+          </div>
+
+          {recordingsLoading ? (
+            <div className="text-center py-8">
+              <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary mx-auto"></div>
+              <p className="mt-2 text-sm text-muted-foreground">Loading recordings...</p>
+            </div>
+          ) : recordings.length === 0 ? (
+            <div className="text-center py-8">
+              <div className="w-16 h-16 bg-muted rounded-full flex items-center justify-center mx-auto mb-4">
+                <Mic className="h-8 w-8 text-muted-foreground" />
+              </div>
+              <p className="text-muted-foreground">No recordings yet</p>
+              <p className="text-sm text-muted-foreground/70 mt-1">
+                Start recording to see your content here
+              </p>
+            </div>
+          ) : (
+            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+              {recordings.slice(0, 6).map((recording) => (
+                <Card key={recording.id} className="hover:shadow-md transition-shadow">
+                  <CardContent className="p-4">
+                    <div className="flex items-start justify-between mb-3">
+                      <div className="flex-1 min-w-0">
+                        <h3 className="font-medium text-foreground truncate">
+                          {recording.title}
+                        </h3>
+                        <p className="text-sm text-muted-foreground mt-1">
+                          {new Date(recording.created_at).toLocaleDateString()}
+                        </p>
+                      </div>
+                      <Badge 
+                        className={`${
+                          recording.status === 'completed' 
+                            ? 'bg-green-100 text-green-800' 
+                            : recording.status === 'processing'
+                            ? 'bg-yellow-100 text-yellow-800'
+                            : 'bg-red-100 text-red-800'
+                        }`}
+                      >
+                        {recording.status}
+                      </Badge>
+                    </div>
+                    
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center space-x-2 text-sm text-muted-foreground">
+                        <span>
+                          {(() => {
+                            const duration = recording.duration
+                            if (!duration || duration <= 0) return '0:00'
+                            
+                            const minutes = Math.floor(duration / 60)
+                            const seconds = Math.floor(duration % 60)
+                            return `${minutes}:${seconds.toString().padStart(2, '0')}`
+                          })()}
+                        </span>
+                        <span>•</span>
+                        <span>{recording.status === 'completed' ? 'Ready' : 'Processing'}</span>
+                      </div>
+                      
+                      <div className="flex items-center space-x-1">
+                        {recording.status === 'completed' && (
+                          <Button 
+                            variant="ghost" 
+                            size="sm" 
+                            className="h-8 w-8 p-0"
+                            onClick={() => playRecentRecording(recording)}
+                          >
+                            {playingRecordingId === recording.id ? (
+                              <Pause className="h-4 w-4" />
+                            ) : (
+                              <Play className="h-4 w-4" />
+                            )}
+                          </Button>
+                        )}
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          )}
         </div>
       </main>
 

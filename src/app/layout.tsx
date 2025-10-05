@@ -14,7 +14,7 @@
 // });
 
 // export const metadata: Metadata = {
-//   title: "Narrate AI - Transform Your Voice Into Engaging Content",
+//   title: "Narrate - Transform Your Voice Into Engaging Content",
 //   description: "Record your thoughts, get AI-powered transcription, and create compelling posts, articles, and social media content automatically.",
 // };
 
@@ -55,7 +55,7 @@ const fraunces = Fraunces({
 });
 
 export const metadata: Metadata = {
-  title: "Narrate AI - Transform Your Voice Into Engaging Content",
+  title: "Narrate - Transform Your Voice Into Engaging Content",
   description: "Record your thoughts, get AI-powered transcription, and create compelling posts, articles, and social media content automatically.",
   generator: "Next.js",
 };

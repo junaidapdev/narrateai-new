@@ -21,7 +21,7 @@ export default function Home() {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="text-center">
-          <div className="text-2xl font-serif font-medium tracking-tight mb-4">Narrate AI</div>
+          <div className="text-2xl font-serif font-medium tracking-tight mb-4">Narrate</div>
           <div className="text-muted-foreground">Loading...</div>
         </div>
       </div>
@@ -43,7 +43,7 @@ export default function Home() {
               <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary">
                 <div className="h-3 w-3 rounded-full bg-primary-foreground" />
               </div>
-              <span className="font-serif text-xl font-medium tracking-tight">Narrate AI</span>
+              <span className="font-serif text-xl font-medium tracking-tight">Narrate</span>
             </Link>
 
             {/* Navigation */}
@@ -94,7 +94,8 @@ export default function Home() {
         <div className="mx-auto max-w-7xl px-6 md:px-8 lg:px-12">
           <div className="mx-auto max-w-4xl text-center">
             <h1 className="text-4xl font-serif font-bold tracking-tight text-foreground sm:text-6xl">
-            Your voice. <br /> LinkedIn posts. <br /> Zero writing.
+            {/* Your voice. <br /> LinkedIn posts. <br /> Zero writing. */}
+            The fastest way founders create compelling LinkedIn content.
               <span className="block text-primary"></span>
             </h1>
             <p className="mt-6 text-lg leading-8 text-muted-foreground max-w-2xl mx-auto">
@@ -450,7 +451,7 @@ export default function Home() {
       </section>
 
       {/* Pricing Section */}
-      <section className="py-24 sm:py-32 bg-muted/30">
+      {/* <section className="py-24 sm:py-32 bg-muted/30">
         <div className="mx-auto max-w-7xl px-6 md:px-8 lg:px-12">
           <div className="mx-auto max-w-2xl text-center mb-16">
             <h2 className="text-3xl font-serif font-bold tracking-tight text-foreground sm:text-4xl">
@@ -462,7 +463,7 @@ export default function Home() {
           </div>
 
           <div className="grid md:grid-cols-2 gap-8 max-w-4xl mx-auto">
-            {/* Free Trial */}
+       
             <div className="bg-white rounded-2xl border border-border shadow-sm p-8">
               <div className="text-center">
                 <h3 className="text-2xl font-serif font-bold text-foreground mb-2">Free Trial</h3>
@@ -497,7 +498,7 @@ export default function Home() {
               </div>
             </div>
 
-            {/* Pro Plan */}
+           
             <div className="bg-white rounded-2xl border-2 border-primary shadow-lg p-8 relative">
               <div className="absolute -top-4 left-1/2 transform -translate-x-1/2">
                 <span className="bg-primary text-primary-foreground px-4 py-1 rounded-full text-sm font-medium">
@@ -548,7 +549,7 @@ export default function Home() {
             </p>
           </div>
         </div>
-      </section>
+      </section> */}
 
       {/* Final CTA Section */}
       <section className="py-24 sm:py-32">
@@ -585,7 +586,7 @@ export default function Home() {
               <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary">
                 <div className="h-3 w-3 rounded-full bg-primary-foreground" />
               </div>
-              <span className="font-serif text-xl font-medium tracking-tight">Narrate AI</span>
+              <span className="font-serif text-xl font-medium tracking-tight">Narrate</span>
             </div>
             <div className="flex gap-8 text-sm">
               <Link href="/pricing" className="text-muted-foreground hover:text-foreground transition-colors">

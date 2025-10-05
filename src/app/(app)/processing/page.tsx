@@ -55,10 +55,17 @@ export default function ProcessingPage() {
           return
         }
 
-        setUserContext({
+        // console.log('Raw user context data from database:', data)
+        // console.log('linkedin_goal:', data?.linkedin_goal)
+        // console.log('back_story:', data?.back_story)
+
+        const context = {
           linkedinGoal: data?.linkedin_goal,
           backStory: data?.back_story
-        })
+        }
+        
+        // console.log('Setting userContext to:', context)
+        setUserContext(context)
       } catch (error) {
         console.error('Error:', error)
       }
@@ -98,7 +105,7 @@ export default function ProcessingPage() {
           transcript: transcriptionResult,
           status: 'completed'
         })
-        console.log('Recording updated with transcript successfully')
+        // console.log('Recording updated with transcript successfully')
       } catch (updateError) {
         console.error('Failed to update recording with transcript:', updateError)
         // Continue processing even if transcript update fails
@@ -109,9 +116,19 @@ export default function ProcessingPage() {
       toast.info('Generating content...')
       
       const contentService = new ContentGenerationService()
+      
+      // Only pass userContext if it has actual values
+      const validUserContext = userContext && (userContext.linkedinGoal || userContext.backStory) 
+        ? userContext 
+        : undefined
+      
+      // console.log('userContext state:', userContext)
+      // console.log('Valid userContext check:', userContext && (userContext.linkedinGoal || userContext.backStory))
+      // console.log('Passing userContext to content generation:', validUserContext)
+      
       const { title, hook, body, call_to_action } = await contentService.generatePostFromTranscription(
         transcriptionResult, 
-        userContext || undefined
+        validUserContext
       )
       setGeneratedPost(`${hook}\n\n${body}\n\n${call_to_action}`)
       

@@ -8,7 +8,7 @@ export default function AboutPage() {
       <header className="container mx-auto px-4 py-6">
         <nav className="flex items-center justify-between">
           <Link href="/" className="text-2xl font-bold text-indigo-600">
-            Narrate AI
+            Narrate
           </Link>
           <div className="flex items-center space-x-4">
             <Link href="/signin">
@@ -24,7 +24,7 @@ export default function AboutPage() {
       {/* Hero Section */}
       <section className="container mx-auto px-4 py-20 text-center">
         <h1 className="text-4xl font-bold text-gray-900 mb-6">
-          About Narrate AI
+          About Narrate
         </h1>
         <p className="text-xl text-gray-600 max-w-3xl mx-auto">
           We're on a mission to make content creation accessible to everyone, 
@@ -40,20 +40,20 @@ export default function AboutPage() {
           </h2>
           <div className="prose prose-lg mx-auto text-gray-600">
             <p className="mb-6">
-              Narrate AI was born from a simple observation: some of the best content 
+              Narrate was born from a simple observation: some of the best content 
               ideas come to us when we're not sitting at a computer. Whether you're 
               walking, driving, or just thinking out loud, your voice contains valuable 
               insights that often get lost.
             </p>
             <p className="mb-6">
-              We built Narrate AI to capture those moments and transform them into 
+              We built Narrate to capture those moments and transform them into 
               engaging content. Our AI-powered platform listens to your voice, 
               understands your ideas, and helps you create compelling posts, articles, 
               and social media content.
             </p>
             <p>
               Today, thousands of creators, entrepreneurs, and professionals use 
-              Narrate AI to turn their thoughts into content that resonates with 
+              Narrate to turn their thoughts into content that resonates with 
               their audience.
             </p>
           </div>
@@ -120,7 +120,7 @@ export default function AboutPage() {
       <footer className="container mx-auto px-4 py-12 border-t">
         <div className="flex flex-col md:flex-row justify-between items-center">
           <div className="text-2xl font-bold text-indigo-600 mb-4 md:mb-0">
-            Narrate AI
+            Narrate
           </div>
           <div className="flex space-x-6">
             <Link href="/" className="text-gray-600 hover:text-gray-900">

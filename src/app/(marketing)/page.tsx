@@ -8,7 +8,7 @@ export default function LandingPage() {
       <header className="max-w-6xl mx-auto px-4 py-6">
         <nav className="flex items-center justify-between">
           <div className="text-2xl font-semibold text-black">
-            Narrate AI
+            Narrate
           </div>
           <div className="flex items-center space-x-4">
             <Link href="/signin" className="text-gray-600 hover:text-black transition-colors">
@@ -247,7 +247,7 @@ export default function LandingPage() {
       <footer className="max-w-6xl mx-auto px-4 py-12 border-t border-gray-200">
         <div className="flex flex-col md:flex-row justify-between items-center">
           <div className="text-2xl font-semibold text-black mb-4 md:mb-0">
-            Narrate AI
+            Narrate
           </div>
           <div className="flex space-x-6 text-sm">
             <Link href="/about" className="text-gray-600 hover:text-black transition-colors">

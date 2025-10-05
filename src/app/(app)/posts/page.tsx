@@ -289,7 +289,7 @@ export default function PostsPage() {
                               </p>
                           </div>
                           <div className="flex items-center space-x-2 ml-4">
-                            <Badge 
+                            {/* <Badge 
                               className={`${
                                 post.status === 'published' 
                                   ? 'bg-green-100 text-green-800 border-green-200' 
@@ -299,14 +299,15 @@ export default function PostsPage() {
                               }`}
                             >
                               {post.status === 'published' ? 'Published' : post.status === 'draft' ? 'Draft' : post.status}
-                            </Badge>
-                            <div className="flex items-center space-x-1">
+                            </Badge> */}
+                          <div className="flex items-center space-x-2 sm:space-x-1">
                                 <Button
                                   variant="ghost"
                                   size="sm"
                                   onClick={() => handleCopyPost(post)}
                                   title="Copy to clipboard"
                                   className="text-gray-500 hover:text-gray-700 hover:bg-gray-100 px-1 py-1 h-7 w-7"
+                                  
                                 >
                                   <Copy className="h-3 w-3" />
                                 </Button>
@@ -320,15 +321,15 @@ export default function PostsPage() {
                                   <Edit className="h-3 w-3" />
                                 </Button>
                                 {post.status === 'draft' && (
-                                  <Button
-                                    variant="ghost"
-                                    size="sm"
-                                    onClick={() => handlePublishPost(post.id)}
-                                    title="Publish this draft"
-                                    className="bg-green-600 hover:bg-green-700 text-white px-3 py-1 h-7 text-xs font-medium"
-                                  >
-                                    Publish
-                                  </Button>
+                                 <Button
+                                 variant="ghost"
+                                 size="sm"
+                                 onClick={() => handlePublishPost(post.id)}
+                                 title="Mark this draft as published"
+                                 className="border border-green-200 text-green-700 hover:bg-green-50 px-3 py-1 h-7 text-xs font-medium"
+                               >
+                                 Mark as Published
+                               </Button>
                                 )}
                                 <Button
                                   variant="ghost"

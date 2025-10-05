@@ -112,7 +112,7 @@ export default function OnboardingGoalPage() {
               <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary">
                 <div className="h-3 w-3 rounded-full bg-primary-foreground" />
               </div>
-              <span className="font-serif text-xl font-medium tracking-tight">Narrate AI</span>
+              <span className="font-serif text-xl font-medium tracking-tight">Narrate</span>
             </Link>
 
             {/* Skip Button */}

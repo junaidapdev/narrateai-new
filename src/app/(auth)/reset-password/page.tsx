@@ -44,7 +44,7 @@ export default function ResetPasswordPage() {
         <div className="max-w-md w-full space-y-8">
           <div className="text-center">
             <Link href="/" className="text-3xl font-bold text-indigo-600">
-              Narrate AI
+              Narrate
             </Link>
           </div>
 
@@ -77,7 +77,7 @@ export default function ResetPasswordPage() {
       <div className="max-w-md w-full space-y-8">
         <div className="text-center">
           <Link href="/" className="text-3xl font-bold text-indigo-600">
-            Narrate AI
+            Narrate
           </Link>
           <h2 className="mt-6 text-3xl font-bold text-gray-900">
             Reset your password

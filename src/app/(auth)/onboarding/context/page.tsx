@@ -62,7 +62,7 @@ export default function OnboardingContextPage() {
     }
 
     if (!referralSource) {
-      toast.error('Please tell us how you heard about Narrate AI')
+      toast.error('Please tell us how you heard about Narrate')
       return
     }
 
@@ -84,7 +84,7 @@ export default function OnboardingContextPage() {
         return
       }
 
-      toast.success('Setup complete! Welcome to Narrate AI!')
+      toast.success('Setup complete! Welcome to Narrate!')
       router.push('/dashboard')
     } catch (error) {
       console.error('Error:', error)
@@ -105,7 +105,7 @@ export default function OnboardingContextPage() {
               <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary">
                 <div className="h-3 w-3 rounded-full bg-primary-foreground" />
               </div>
-              <span className="font-serif text-xl font-medium tracking-tight">Narrate AI</span>
+              <span className="font-serif text-xl font-medium tracking-tight">Narrate</span>
             </Link>
 
             {/* Skip Button */}
@@ -168,7 +168,7 @@ export default function OnboardingContextPage() {
 
               <div className="space-y-2">
                 <Label htmlFor="referral-source" className="text-foreground font-medium">
-                  How did you hear about Narrate AI?
+                  How did you hear about Narrate?
                 </Label>
                 <Select value={referralSource} onValueChange={setReferralSource}>
                   <SelectTrigger className="border-border">

@@ -71,8 +71,6 @@ export function useRecordings() {
         }
       }
 
-      console.log('Inserting recording with data:', { ...recording, user_id: user.id })
-
       const { data, error } = await supabase
         .from('recordings')
         .insert([{ ...recording, user_id: user.id }])
@@ -90,7 +88,7 @@ export function useRecordings() {
         throw error
       }
 
-      console.log('Recording inserted successfully:', data)
+      // console.log('Recording inserted successfully:', data)
       setRecordings(prev => [data, ...prev])
       return data
     } catch (err) {

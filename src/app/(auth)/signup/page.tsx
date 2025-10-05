@@ -20,7 +20,7 @@ export default function SignUpPage() {
 
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault()
-    console.log('Form submitted with:', { email, fullName })
+    // console.log('Form submitted with:', { email, fullName })
     setLoading(true)
 
     try {
@@ -49,8 +49,8 @@ export default function SignUpPage() {
       }
 
       if (data.user) {
-        console.log('User created successfully:', data.user)
-        toast.success('Account created successfully! Welcome to Narrate AI!')
+        // console.log('User created successfully:', data.user)
+        toast.success('Account created successfully! Welcome to Narrate!')
         // Redirect to onboarding instead of showing email confirmation
         router.push('/onboarding')
       }
@@ -93,7 +93,7 @@ export default function SignUpPage() {
               <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary">
                 <div className="h-3 w-3 rounded-full bg-primary-foreground" />
               </div>
-              <span className="font-serif text-xl font-medium tracking-tight">Narrate AI</span>
+              <span className="font-serif text-xl font-medium tracking-tight">Narrate</span>
             </Link>
 
             {/* Navigation */}
@@ -151,7 +151,7 @@ export default function SignUpPage() {
 
           <Card className="bg-background shadow-lg border border-border">
             <CardHeader>
-              <CardTitle className="text-foreground text-xl">Get started with Narrate AI</CardTitle>
+              <CardTitle className="text-foreground text-xl">Get started with Narrate</CardTitle>
               <CardDescription className="text-muted-foreground">
                 Start creating content from your voice today
               </CardDescription>

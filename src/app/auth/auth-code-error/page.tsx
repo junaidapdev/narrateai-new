@@ -9,7 +9,7 @@ export default function AuthCodeErrorPage() {
       <div className="max-w-md w-full space-y-8">
         <div className="text-center">
           <Link href="/" className="text-3xl font-bold text-indigo-600">
-            Narrate AI
+            Narrate
           </Link>
         </div>
 

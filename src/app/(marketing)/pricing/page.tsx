@@ -106,11 +106,11 @@ function PricingContent() {
               <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary">
                 <div className="h-3 w-3 rounded-full bg-primary-foreground" />
               </div>
-              <span className="font-serif text-xl font-medium tracking-tight">Narrate AI</span>
+              <span className="font-serif text-xl font-medium tracking-tight">Narrate</span>
             </Link>
 
             {/* Navigation */}
-            <nav className="hidden md:flex items-center gap-8">
+            {/* <nav className="hidden md:flex items-center gap-8">
               <Link
                 href="#features"
                 className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
@@ -135,7 +135,7 @@ function PricingContent() {
               >
                 Pricing
               </Link>
-            </nav>
+            </nav> */}
 
             {/* Actions */}
             <div className="flex items-center gap-3">

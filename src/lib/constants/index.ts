@@ -1,5 +1,5 @@
 export const APP_CONFIG = {
-  name: 'Narrate AI',
+  name: 'Narrate',
   description: 'Transform your voice into engaging content',
   url: process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000',
   version: '1.0.0',

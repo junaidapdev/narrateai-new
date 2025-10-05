@@ -7,7 +7,7 @@ export class TranscriptionService {
 
   constructor() {
     const apiKey = process.env.NEXT_PUBLIC_ASSEMBLYAI_API_KEY
-    console.log('AssemblyAI API Key check:', apiKey ? 'Found' : 'Not found')
+    // console.log('AssemblyAI API Key check:', apiKey ? 'Found' : 'Not found')
     if (!apiKey) {
       throw new Error('AssemblyAI API key not found. Please set NEXT_PUBLIC_ASSEMBLYAI_API_KEY in your .env.local file.')
     }
@@ -17,7 +17,7 @@ export class TranscriptionService {
 
   async transcribeAudio(audioUrl: string): Promise<string> {
     try {
-      console.log('Starting transcription for:', audioUrl)
+      // console.log('Starting transcription for:', audioUrl)
       
       // First, try direct URL approach
       try {
@@ -26,7 +26,7 @@ export class TranscriptionService {
           language_detection: true
         })
 
-        console.log('Transcription completed:', transcript.text)
+        // console.log('Transcription completed:', transcript.text)
         return transcript.text || 'No transcription available'
       } catch (directError) {
         console.log('Direct URL failed, trying audio processing approach...')
