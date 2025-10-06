@@ -256,6 +256,9 @@ export default function LandingPage() {
             <Link href="/pricing" className="text-gray-600 hover:text-black transition-colors">
               Pricing
             </Link>
+            <Link href="/privacy" className="text-gray-600 hover:text-black transition-colors">
+              Privacy
+            </Link>
             <Link href="/signin" className="text-gray-600 hover:text-black transition-colors">
               Sign In
             </Link>

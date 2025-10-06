@@ -129,6 +129,9 @@ export default function AboutPage() {
             <Link href="/pricing" className="text-gray-600 hover:text-gray-900">
               Pricing
             </Link>
+            <Link href="/privacy" className="text-gray-600 hover:text-gray-900">
+              Privacy
+            </Link>
             <Link href="/signin" className="text-gray-600 hover:text-gray-900">
               Sign In
             </Link>
