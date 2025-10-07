@@ -38,6 +38,8 @@ export interface Post {
   platform?: string
   status: 'draft' | 'published' | 'scheduled'
   published_at?: string
+  scheduled_at?: string
+  linkedin_post_id?: string
   created_at: string
   updated_at: string
 }
@@ -95,5 +97,32 @@ export interface PostForm {
   title: string
   content: string
   recording_id?: string
+}
+
+// LinkedIn connection types
+export interface LinkedInConnection {
+  id: string
+  user_id: string
+  linkedin_user_id: string
+  access_token: string
+  refresh_token?: string
+  token_expires_at?: string
+  linkedin_profile_data?: any
+  is_active: boolean
+  created_at: string
+  updated_at: string
+}
+
+// Scheduled post types
+export interface ScheduledPost {
+  id: string
+  post_id: string
+  user_id: string
+  scheduled_at: string
+  status: 'pending' | 'processing' | 'completed' | 'failed' | 'cancelled'
+  linkedin_post_id?: string
+  error_message?: string
+  created_at: string
+  updated_at: string
 }
 

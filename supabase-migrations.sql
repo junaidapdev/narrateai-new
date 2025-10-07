@@ -1,159 +1,106 @@
--- Create profiles table if it doesn't exist
-CREATE TABLE IF NOT EXISTS public.profiles (
-  id UUID REFERENCES auth.users(id) ON DELETE CASCADE PRIMARY KEY,
-  email TEXT NOT NULL,
-  full_name TEXT,
-  avatar_url TEXT,
-  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+-- Create linkedin_connections table
+CREATE TABLE IF NOT EXISTS public.linkedin_connections (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+    linkedin_user_id TEXT NOT NULL,
+    access_token TEXT NOT NULL,
+    refresh_token TEXT,
+    token_expires_at TIMESTAMP WITH TIME ZONE,
+    linkedin_profile_data JSONB,
+    is_active BOOLEAN DEFAULT true,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
--- Enable Row Level Security
-ALTER TABLE public.profiles ENABLE ROW LEVEL SECURITY;
+-- Create unique index to prevent duplicate connections per user
+CREATE UNIQUE INDEX IF NOT EXISTS linkedin_connections_user_id_unique 
+ON public.linkedin_connections(user_id) 
+WHERE is_active = true;
 
--- Create policies for profiles table
-CREATE POLICY "Users can view own profile" ON public.profiles
-  FOR SELECT USING (auth.uid() = id);
+-- Create index for LinkedIn user ID lookups
+CREATE INDEX IF NOT EXISTS linkedin_connections_linkedin_user_id_idx 
+ON public.linkedin_connections(linkedin_user_id);
 
-CREATE POLICY "Users can update own profile" ON public.profiles
-  FOR UPDATE USING (auth.uid() = id);
+-- Add RLS (Row Level Security) policies
+ALTER TABLE public.linkedin_connections ENABLE ROW LEVEL SECURITY;
 
-CREATE POLICY "Users can insert own profile" ON public.profiles
-  FOR INSERT WITH CHECK (auth.uid() = id);
+-- Policy: Users can only see their own LinkedIn connections
+CREATE POLICY "Users can view own linkedin connections" ON public.linkedin_connections
+    FOR SELECT USING (auth.uid() = user_id);
 
--- Create function to handle new user signup
-CREATE OR REPLACE FUNCTION public.handle_new_user()
-RETURNS TRIGGER AS $$
-BEGIN
-  INSERT INTO public.profiles (id, email, full_name, avatar_url)
-  VALUES (
-    NEW.id,
-    NEW.email,
-    NEW.raw_user_meta_data->>'full_name',
-    NEW.raw_user_meta_data->>'avatar_url'
-  );
-  RETURN NEW;
-END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
+-- Policy: Users can insert their own LinkedIn connections
+CREATE POLICY "Users can insert own linkedin connections" ON public.linkedin_connections
+    FOR INSERT WITH CHECK (auth.uid() = user_id);
 
--- Create trigger to automatically create profile on user signup
-DROP TRIGGER IF EXISTS on_auth_user_created ON auth.users;
-CREATE TRIGGER on_auth_user_created
-  AFTER INSERT ON auth.users
-  FOR EACH ROW EXECUTE FUNCTION public.handle_new_user();
+-- Policy: Users can update their own LinkedIn connections
+CREATE POLICY "Users can update own linkedin connections" ON public.linkedin_connections
+    FOR UPDATE USING (auth.uid() = user_id);
+
+-- Policy: Users can delete their own LinkedIn connections
+CREATE POLICY "Users can delete own linkedin connections" ON public.linkedin_connections
+    FOR DELETE USING (auth.uid() = user_id);
+
+-- Add scheduled_at and linkedin_post_id columns to posts table if they don't exist
+ALTER TABLE public.posts 
+ADD COLUMN IF NOT EXISTS scheduled_at TIMESTAMP WITH TIME ZONE,
+ADD COLUMN IF NOT EXISTS linkedin_post_id TEXT;
+
+-- Create scheduled_posts table for better tracking
+CREATE TABLE IF NOT EXISTS public.scheduled_posts (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    post_id UUID NOT NULL REFERENCES public.posts(id) ON DELETE CASCADE,
+    user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+    scheduled_at TIMESTAMP WITH TIME ZONE NOT NULL,
+    status TEXT DEFAULT 'pending' CHECK (status IN ('pending', 'processing', 'completed', 'failed', 'cancelled')),
+    linkedin_post_id TEXT,
+    error_message TEXT,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- Create indexes for scheduled_posts
+CREATE INDEX IF NOT EXISTS scheduled_posts_scheduled_at_idx 
+ON public.scheduled_posts(scheduled_at);
+
+CREATE INDEX IF NOT EXISTS scheduled_posts_status_idx 
+ON public.scheduled_posts(status);
+
+CREATE INDEX IF NOT EXISTS scheduled_posts_user_id_idx 
+ON public.scheduled_posts(user_id);
+
+-- Add RLS for scheduled_posts
+ALTER TABLE public.scheduled_posts ENABLE ROW LEVEL SECURITY;
+
+-- Policy: Users can only see their own scheduled posts
+CREATE POLICY "Users can view own scheduled posts" ON public.scheduled_posts
+    FOR SELECT USING (auth.uid() = user_id);
+
+-- Policy: Users can insert their own scheduled posts
+CREATE POLICY "Users can insert own scheduled posts" ON public.scheduled_posts
+    FOR INSERT WITH CHECK (auth.uid() = user_id);
+
+-- Policy: Users can update their own scheduled posts
+CREATE POLICY "Users can update own scheduled posts" ON public.scheduled_posts
+    FOR UPDATE USING (auth.uid() = user_id);
+
+-- Policy: Users can delete their own scheduled posts
+CREATE POLICY "Users can delete own scheduled posts" ON public.scheduled_posts
+    FOR DELETE USING (auth.uid() = user_id);
 
 -- Create function to update updated_at timestamp
-CREATE OR REPLACE FUNCTION public.handle_updated_at()
+CREATE OR REPLACE FUNCTION update_updated_at_column()
 RETURNS TRIGGER AS $$
 BEGIN
-  NEW.updated_at = NOW();
-  RETURN NEW;
+    NEW.updated_at = NOW();
+    RETURN NEW;
 END;
-$$ LANGUAGE plpgsql;
+$$ language 'plpgsql';
 
--- Create trigger to update updated_at on profiles
-DROP TRIGGER IF EXISTS on_profiles_updated ON public.profiles;
-CREATE TRIGGER on_profiles_updated
-  BEFORE UPDATE ON public.profiles
-  FOR EACH ROW EXECUTE FUNCTION public.handle_updated_at();
+-- Create triggers for updated_at
+CREATE TRIGGER update_linkedin_connections_updated_at 
+    BEFORE UPDATE ON public.linkedin_connections 
+    FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
--- Create recordings table if it doesn't exist
-CREATE TABLE IF NOT EXISTS public.recordings (
-  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-  user_id UUID REFERENCES public.profiles(id) ON DELETE CASCADE NOT NULL,
-  title TEXT NOT NULL,
-  audio_url TEXT NOT NULL,
-  transcript TEXT,
-  duration INTEGER,
-  status TEXT DEFAULT 'processing' CHECK (status IN ('processing', 'completed', 'failed')),
-  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
-);
-
--- Enable Row Level Security for recordings
-ALTER TABLE public.recordings ENABLE ROW LEVEL SECURITY;
-
--- Create policies for recordings table
-CREATE POLICY "Users can view own recordings" ON public.recordings
-  FOR SELECT USING (auth.uid() = user_id);
-
-CREATE POLICY "Users can insert own recordings" ON public.recordings
-  FOR INSERT WITH CHECK (auth.uid() = user_id);
-
-CREATE POLICY "Users can update own recordings" ON public.recordings
-  FOR UPDATE USING (auth.uid() = user_id);
-
-CREATE POLICY "Users can delete own recordings" ON public.recordings
-  FOR DELETE USING (auth.uid() = user_id);
-
--- Create trigger to update updated_at on recordings
-DROP TRIGGER IF EXISTS on_recordings_updated ON public.recordings;
-CREATE TRIGGER on_recordings_updated
-  BEFORE UPDATE ON public.recordings
-  FOR EACH ROW EXECUTE FUNCTION public.handle_updated_at();
-
--- Create posts table if it doesn't exist
-CREATE TABLE IF NOT EXISTS public.posts (
-  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-  user_id UUID REFERENCES public.profiles(id) ON DELETE CASCADE NOT NULL,
-  recording_id UUID REFERENCES public.recordings(id) ON DELETE SET NULL,
-  title TEXT NOT NULL,
-  content TEXT NOT NULL,
-  status TEXT DEFAULT 'draft' CHECK (status IN ('draft', 'published', 'archived')),
-  published_at TIMESTAMP WITH TIME ZONE,
-  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
-);
-
--- Enable Row Level Security for posts
-ALTER TABLE public.posts ENABLE ROW LEVEL SECURITY;
-
--- Create policies for posts table
-CREATE POLICY "Users can view own posts" ON public.posts
-  FOR SELECT USING (auth.uid() = user_id);
-
-CREATE POLICY "Users can insert own posts" ON public.posts
-  FOR INSERT WITH CHECK (auth.uid() = user_id);
-
-CREATE POLICY "Users can update own posts" ON public.posts
-  FOR UPDATE USING (auth.uid() = user_id);
-
-CREATE POLICY "Users can delete own posts" ON public.posts
-  FOR DELETE USING (auth.uid() = user_id);
-
--- Create trigger to update updated_at on posts
-DROP TRIGGER IF EXISTS on_posts_updated ON public.posts;
-CREATE TRIGGER on_posts_updated
-  BEFORE UPDATE ON public.posts
-  FOR EACH ROW EXECUTE FUNCTION public.handle_updated_at();
-
--- Create subscriptions table if it doesn't exist
-CREATE TABLE IF NOT EXISTS public.subscriptions (
-  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-  user_id UUID REFERENCES public.profiles(id) ON DELETE CASCADE NOT NULL,
-  status TEXT DEFAULT 'active' CHECK (status IN ('active', 'canceled', 'past_due', 'unpaid')),
-  plan TEXT DEFAULT 'free' CHECK (plan IN ('free', 'pro', 'enterprise')),
-  current_period_start TIMESTAMP WITH TIME ZONE NOT NULL,
-  current_period_end TIMESTAMP WITH TIME ZONE NOT NULL,
-  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
-);
-
--- Enable Row Level Security for subscriptions
-ALTER TABLE public.subscriptions ENABLE ROW LEVEL SECURITY;
-
--- Create policies for subscriptions table
-CREATE POLICY "Users can view own subscription" ON public.subscriptions
-  FOR SELECT USING (auth.uid() = user_id);
-
-CREATE POLICY "Users can insert own subscription" ON public.subscriptions
-  FOR INSERT WITH CHECK (auth.uid() = user_id);
-
-CREATE POLICY "Users can update own subscription" ON public.subscriptions
-  FOR UPDATE USING (auth.uid() = user_id);
-
--- Create trigger to update updated_at on subscriptions
-DROP TRIGGER IF EXISTS on_subscriptions_updated ON public.subscriptions;
-CREATE TRIGGER on_subscriptions_updated
-  BEFORE UPDATE ON public.subscriptions
-  FOR EACH ROW EXECUTE FUNCTION public.handle_updated_at();
+CREATE TRIGGER update_scheduled_posts_updated_at 
+    BEFORE UPDATE ON public.scheduled_posts 
+    FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();

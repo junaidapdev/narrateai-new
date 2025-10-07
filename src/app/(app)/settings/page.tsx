@@ -13,8 +13,9 @@ import { Badge } from "@/components/ui/badge"
 import Link from "next/link"
 import { useAuth } from "@/lib/hooks/useAuth"
 import { useSubscription } from "@/lib/hooks/useSubscription"
+import { useLinkedIn } from "@/lib/hooks/useLinkedIn"
 import { getInitials } from "@/lib/utils"
-import { User, Settings, CreditCard, LogOut, Mail, Trash2, Target, Users, TrendingUp, ShoppingCart, Sparkles } from "lucide-react"
+import { User, Settings, CreditCard, LogOut, Mail, Trash2, Target, Users, TrendingUp, ShoppingCart, Sparkles, Linkedin, CheckCircle, XCircle } from "lucide-react"
 import { toast } from 'sonner'
 import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
@@ -24,9 +25,35 @@ import { DashboardHeader } from '@/components/dashboard-header'
 export default function SettingsPage() {
   const { user, loading: authLoading } = useAuth()
   const { subscription, loading: subscriptionLoading } = useSubscription()
+  const { connection: linkedinConnection, loading: linkedinLoading, connectLinkedIn, disconnectLinkedIn } = useLinkedIn()
   const [fullName, setFullName] = useState(user?.user_metadata?.full_name || '')
   const [email, setEmail] = useState(user?.email || '')
   const [isUpdating, setIsUpdating] = useState(false)
+  
+  // LinkedIn OAuth result handling
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search)
+    const linkedinSuccess = urlParams.get('linkedin_success')
+    const linkedinError = urlParams.get('linkedin_error')
+    
+    if (linkedinSuccess === 'connected') {
+      toast.success('LinkedIn connected successfully!')
+      // Clean up URL
+      window.history.replaceState({}, '', '/settings')
+    } else if (linkedinError) {
+      const errorMessages: Record<string, string> = {
+        'access_denied': 'LinkedIn connection was cancelled',
+        'missing_parameters': 'Missing authorization parameters',
+        'token_failed': 'Failed to get LinkedIn access token',
+        'profile_failed': 'Failed to get LinkedIn profile',
+        'storage_failed': 'Failed to save LinkedIn connection',
+        'callback_failed': 'LinkedIn connection failed'
+      }
+      toast.error(errorMessages[linkedinError] || 'LinkedIn connection failed')
+      // Clean up URL
+      window.history.replaceState({}, '', '/settings')
+    }
+  }, [])
   
   // Onboarding fields state
   const [linkedinGoal, setLinkedinGoal] = useState('')
@@ -413,6 +440,78 @@ export default function SettingsPage() {
                       </Button>
                     </div>
                   </>
+                )}
+              </CardContent>
+            </Card>
+
+            {/* LinkedIn Integration */}
+            <Card className="bg-white border border-border shadow-sm">
+              <CardHeader className="pb-6">
+                <CardTitle className="flex items-center text-xl font-serif font-semibold text-foreground">
+                  <Linkedin className="h-5 w-5 mr-3 text-primary" />
+                  LinkedIn Integration
+                </CardTitle>
+                <CardDescription className="text-muted-foreground">
+                  Connect your LinkedIn account to schedule posts directly
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                {linkedinLoading ? (
+                  <div className="text-center py-6">
+                    <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary mx-auto"></div>
+                    <p className="mt-2 text-sm text-muted-foreground">Loading...</p>
+                  </div>
+                ) : linkedinConnection ? (
+                  <div className="space-y-4">
+                    <div className="flex items-center gap-3 p-4 bg-green-50 rounded-lg border border-green-200">
+                      <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
+                        <CheckCircle className="h-5 w-5 text-green-600" />
+                      </div>
+                      <div className="flex-1">
+                        <p className="font-medium text-green-900">LinkedIn Connected</p>
+                            <p className="text-sm text-green-600">
+                              Connected as {linkedinConnection.linkedin_profile_data?.given_name} {linkedinConnection.linkedin_profile_data?.family_name}
+                            </p>
+                      </div>
+                    </div>
+                    <div className="text-sm text-muted-foreground">
+                      <p>✅ You can now schedule posts directly to LinkedIn</p>
+                      <p>✅ Posts will be published automatically at your chosen time</p>
+                      <p>✅ Manage all your scheduled posts from the dashboard</p>
+                    </div>
+                    <Button 
+                      onClick={disconnectLinkedIn}
+                      variant="outline" 
+                      className="border-red-200 text-red-600 hover:bg-red-50"
+                    >
+                      Disconnect LinkedIn
+                    </Button>
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    <div className="flex items-center gap-3 p-4 bg-gray-50 rounded-lg border border-gray-200">
+                      <div className="w-10 h-10 bg-gray-100 rounded-lg flex items-center justify-center">
+                        <XCircle className="h-5 w-5 text-gray-600" />
+                      </div>
+                      <div className="flex-1">
+                        <p className="font-medium text-gray-900">LinkedIn Not Connected</p>
+                        <p className="text-sm text-gray-600">Connect to schedule posts directly to LinkedIn</p>
+                      </div>
+                    </div>
+                    <div className="text-sm text-muted-foreground">
+                      <p>🔗 Connect your LinkedIn account to unlock:</p>
+                      <p>• Schedule posts directly from Narrate</p>
+                      <p>• Automatic posting at your chosen time</p>
+                      <p>• Seamless content workflow</p>
+                    </div>
+                    <Button 
+                      onClick={connectLinkedIn}
+                      className="bg-blue-600 hover:bg-blue-700 text-white"
+                    >
+                      <Linkedin className="h-4 w-4 mr-2" />
+                      Connect LinkedIn
+                    </Button>
+                  </div>
                 )}
               </CardContent>
             </Card>

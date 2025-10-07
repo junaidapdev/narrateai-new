@@ -1,9 +1,0 @@
--- Check current posts table structure
-SELECT column_name, data_type, is_nullable
-FROM information_schema.columns
-WHERE table_schema = 'public'
-  AND table_name = 'posts'
-ORDER BY ordinal_position;
-
--- Also check if there are any existing posts
-SELECT COUNT(*) as post_count FROM public.posts;

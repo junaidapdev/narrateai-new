@@ -133,6 +133,8 @@ export interface Database {
           platform: string | null
           status: 'draft' | 'published' | 'scheduled'
           published_at: string | null
+          scheduled_at: string | null
+          linkedin_post_id: string | null
           created_at: string
           updated_at: string
         }
@@ -147,6 +149,8 @@ export interface Database {
           platform?: string | null
           status?: 'draft' | 'published' | 'scheduled'
           published_at?: string | null
+          scheduled_at?: string | null
+          linkedin_post_id?: string | null
           created_at?: string
           updated_at?: string
         }
@@ -161,6 +165,8 @@ export interface Database {
           platform?: string | null
           status?: 'draft' | 'published' | 'scheduled'
           published_at?: string | null
+          scheduled_at?: string | null
+          linkedin_post_id?: string | null
           created_at?: string
           updated_at?: string
         }
@@ -213,6 +219,101 @@ export interface Database {
         Relationships: [
           {
             foreignKeyName: "subscriptions_user_id_fkey"
+            columns: ["user_id"]
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
+      linkedin_connections: {
+        Row: {
+          id: string
+          user_id: string
+          linkedin_user_id: string
+          access_token: string
+          refresh_token: string | null
+          token_expires_at: string | null
+          linkedin_profile_data: Json | null
+          is_active: boolean
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          linkedin_user_id: string
+          access_token: string
+          refresh_token?: string | null
+          token_expires_at?: string | null
+          linkedin_profile_data?: Json | null
+          is_active?: boolean
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          linkedin_user_id?: string
+          access_token?: string
+          refresh_token?: string | null
+          token_expires_at?: string | null
+          linkedin_profile_data?: Json | null
+          is_active?: boolean
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "linkedin_connections_user_id_fkey"
+            columns: ["user_id"]
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
+      scheduled_posts: {
+        Row: {
+          id: string
+          post_id: string
+          user_id: string
+          scheduled_at: string
+          status: 'pending' | 'processing' | 'completed' | 'failed' | 'cancelled'
+          linkedin_post_id: string | null
+          error_message: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          post_id: string
+          user_id: string
+          scheduled_at: string
+          status?: 'pending' | 'processing' | 'completed' | 'failed' | 'cancelled'
+          linkedin_post_id?: string | null
+          error_message?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          post_id?: string
+          user_id?: string
+          scheduled_at?: string
+          status?: 'pending' | 'processing' | 'completed' | 'failed' | 'cancelled'
+          linkedin_post_id?: string | null
+          error_message?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "scheduled_posts_post_id_fkey"
+            columns: ["post_id"]
+            referencedRelation: "posts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "scheduled_posts_user_id_fkey"
             columns: ["user_id"]
             referencedRelation: "users"
             referencedColumns: ["id"]

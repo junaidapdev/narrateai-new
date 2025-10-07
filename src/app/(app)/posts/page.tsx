@@ -7,11 +7,15 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Badge } from "@/components/ui/badge"
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import Link from "next/link"
 import { useAuth } from "@/lib/hooks/useAuth"
 import { usePosts } from "@/lib/hooks/usePosts"
+import { useLinkedIn } from "@/lib/hooks/useLinkedIn"
+import { useLinkedInPosting } from "@/lib/hooks/useLinkedInPosting"
 import { formatDate } from "@/lib/utils"
-import { FileText, Edit, Trash2, Eye, Copy } from "lucide-react"
+import { FileText, Edit, Trash2, Eye, Copy, Clock, Calendar } from "lucide-react"
 import { toast } from 'sonner'
 import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
@@ -21,12 +25,22 @@ import { DashboardHeader } from '@/components/dashboard-header'
 export default function PostsPage() {
   const { user, loading: authLoading } = useAuth()
   const { posts, loading: postsLoading, createPost, updatePost, deletePost, publishPost } = usePosts()
+  const { connection: linkedinConnection, loading: linkedinLoading } = useLinkedIn()
+  const { postToLinkedIn, canPost } = useLinkedInPosting()
   const [editingPost, setEditingPost] = useState<string | null>(null)
   const [editTitle, setEditTitle] = useState('')
   const [editHook, setEditHook] = useState('')
   const [editBody, setEditBody] = useState('')
   const [editCallToAction, setEditCallToAction] = useState('')
   const [activeFilter, setActiveFilter] = useState('Draft')
+  
+  // Scheduling state
+  const [schedulingPost, setSchedulingPost] = useState<string | null>(null)
+  const [scheduleDate, setScheduleDate] = useState('')
+  const [scheduleTime, setScheduleTime] = useState('')
+  const [scheduleVisibility, setScheduleVisibility] = useState<'PUBLIC' | 'CONNECTIONS'>('PUBLIC')
+  const [isScheduling, setIsScheduling] = useState(false)
+  
   const router = useRouter()
   const supabase = createClient()
 
@@ -141,6 +155,116 @@ export default function PostsPage() {
     }
   }
 
+  const handleSchedulePost = (post: any) => {
+    if (!canPost) {
+      toast.error('LinkedIn not connected. Please connect your LinkedIn account in Settings first.')
+      return
+    }
+    
+    setSchedulingPost(post.id)
+    // Set default date to tomorrow at 9 AM in local time
+    const tomorrow = new Date()
+    tomorrow.setDate(tomorrow.getDate() + 1)
+    tomorrow.setHours(9, 0, 0, 0)
+    
+    // Convert to local timezone for display
+    const dateStr = tomorrow.toISOString().split('T')[0]
+    const timeStr = tomorrow.toTimeString().split(' ')[0].slice(0, 5)
+    
+    setScheduleDate(dateStr)
+    setScheduleTime(timeStr)
+  }
+
+  const handleCancelSchedule = () => {
+    setSchedulingPost(null)
+    setScheduleDate('')
+    setScheduleTime('')
+    setScheduleVisibility('PUBLIC')
+  }
+
+  const handleConfirmSchedule = async () => {
+    if (!schedulingPost || !scheduleDate || !scheduleTime) {
+      toast.error('Please select both date and time')
+      return
+    }
+
+    if (!canPost) {
+      toast.error('LinkedIn not connected. Please connect your LinkedIn account first.')
+      return
+    }
+
+    // Create the scheduled datetime in local timezone
+    const scheduledDateTime = new Date(`${scheduleDate}T${scheduleTime}`)
+    const now = new Date()
+
+    if (scheduledDateTime <= now) {
+      toast.error('Scheduled time must be in the future')
+      return
+    }
+
+    setIsScheduling(true)
+
+    try {
+      // The scheduledDateTime is already in local timezone, but we need to ensure it's treated as local
+      // Create a new date object that represents the local time correctly
+      const localDate = new Date(scheduleDate)
+      const [hours, minutes] = scheduleTime.split(':').map(Number)
+      const localScheduledDateTime = new Date(localDate.getFullYear(), localDate.getMonth(), localDate.getDate(), hours, minutes)
+      
+      // Convert to UTC for storage (database stores in UTC)
+      const utcScheduledTime = localScheduledDateTime.toISOString()
+      
+      // Debug logging
+      console.log('Scheduling Debug:', {
+        scheduleDate,
+        scheduleTime,
+        localScheduledDateTime: localScheduledDateTime.toString(),
+        utcScheduledTime,
+        timezone: Intl.DateTimeFormat().resolvedOptions().timeZone
+      })
+      
+      // Update the post status to scheduled
+      await updatePost(schedulingPost, {
+        status: 'scheduled',
+        scheduled_at: utcScheduledTime
+      })
+
+      // Create scheduled post entry
+      const { error: scheduledPostError } = await supabase
+        .from('scheduled_posts')
+        .insert({
+          post_id: schedulingPost,
+          user_id: user?.id,
+          scheduled_at: utcScheduledTime,
+          status: 'pending'
+        })
+
+      if (scheduledPostError) {
+        console.error('Error creating scheduled post:', scheduledPostError)
+        toast.error('Failed to schedule post')
+        return
+      }
+
+      // Show success message in local timezone
+      const localTimeString = localScheduledDateTime.toLocaleString('en-US', {
+        timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+      })
+      
+      toast.success(`Post scheduled for ${localTimeString}`)
+      handleCancelSchedule()
+    } catch (error) {
+      console.error('Scheduling error:', error)
+      toast.error('Failed to schedule post')
+    } finally {
+      setIsScheduling(false)
+    }
+  }
+
 
   const getStatusBadge = (status: string) => {
     switch (status) {
@@ -148,6 +272,8 @@ export default function PostsPage() {
         return <Badge className="bg-green-100 text-green-800">Published</Badge>
       case 'draft':
         return <Badge className="bg-yellow-100 text-yellow-800">Draft</Badge>
+      case 'scheduled':
+        return <Badge className="bg-blue-100 text-blue-800">Scheduled</Badge>
       default:
         return <Badge className="bg-gray-100 text-gray-800">Unknown</Badge>
     }
@@ -158,6 +284,7 @@ export default function PostsPage() {
     if (activeFilter === 'All') return true
     if (activeFilter === 'Published') return post.status === 'published'
     if (activeFilter === 'Draft') return post.status === 'draft'
+    if (activeFilter === 'Scheduled') return post.status === 'scheduled'
     return true
   })
 
@@ -181,7 +308,7 @@ export default function PostsPage() {
         {/* Filter Tabs */}
         <div className="mb-6">
           <div className="flex space-x-6 border-b border-gray-200">
-            {['Draft', 'Published', 'All'].map((filter) => (
+            {['Draft', 'Scheduled', 'Published', 'All'].map((filter) => (
               <button
                 key={filter}
                 onClick={() => setActiveFilter(filter)}
@@ -321,15 +448,41 @@ export default function PostsPage() {
                                   <Edit className="h-3 w-3" />
                                 </Button>
                                 {post.status === 'draft' && (
-                                 <Button
-                                 variant="ghost"
-                                 size="sm"
-                                 onClick={() => handlePublishPost(post.id)}
-                                 title="Mark this draft as published"
-                                 className="border border-green-200 text-green-700 hover:bg-green-50 px-3 py-1 h-7 text-xs font-medium"
-                               >
-                                 Mark as Published
-                               </Button>
+                                  <>
+                                    <Button
+                                      variant="ghost"
+                                      size="sm"
+                                      onClick={() => handlePublishPost(post.id)}
+                                      title="Mark this draft as published"
+                                      className="border border-green-200 text-green-700 hover:bg-green-50 px-3 py-1 h-7 text-xs font-medium"
+                                    >
+                                      Mark as Published
+                                    </Button>
+                                    <Button
+                                      variant="ghost"
+                                      size="sm"
+                                      onClick={() => handleSchedulePost(post)}
+                                      title={canPost ? "Schedule this post for LinkedIn" : "Connect LinkedIn to schedule posts"}
+                                      className={`border border-blue-200 text-blue-700 hover:bg-blue-50 px-3 py-1 h-7 text-xs font-medium ${!canPost ? 'opacity-50' : ''}`}
+                                      disabled={!canPost}
+                                    >
+                                      <Clock className="h-3 w-3 mr-1" />
+                                      Schedule
+                                    </Button>
+                                  </>
+                                )}
+                                {post.status === 'scheduled' && (
+                                  <div className="flex items-center text-xs text-blue-600">
+                                    <Calendar className="h-3 w-3 mr-1" />
+                                    {post.scheduled_at && new Date(post.scheduled_at).toLocaleString('en-US', {
+                                      timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+                                      year: 'numeric',
+                                      month: 'short',
+                                      day: 'numeric',
+                                      hour: '2-digit',
+                                      minute: '2-digit'
+                                    })}
+                                  </div>
                                 )}
                                 <Button
                                   variant="ghost"
@@ -350,6 +503,76 @@ export default function PostsPage() {
               </div>
             )}
       </main>
+
+      {/* Scheduling Modal */}
+      <Dialog open={!!schedulingPost} onOpenChange={(open) => !open && handleCancelSchedule()}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Schedule Post</DialogTitle>
+            <DialogDescription>
+              Schedule this post to be automatically published on LinkedIn.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <Label htmlFor="schedule-date">Date</Label>
+              <Input
+                id="schedule-date"
+                type="date"
+                value={scheduleDate}
+                onChange={(e) => setScheduleDate(e.target.value)}
+                min={new Date().toISOString().split('T')[0]}
+                className="mt-1"
+              />
+            </div>
+            <div>
+              <Label htmlFor="schedule-time">Time</Label>
+              <Input
+                id="schedule-time"
+                type="time"
+                value={scheduleTime}
+                onChange={(e) => setScheduleTime(e.target.value)}
+                className="mt-1"
+              />
+            </div>
+            <div>
+              <Label htmlFor="schedule-visibility">Visibility</Label>
+              <Select value={scheduleVisibility} onValueChange={(value: 'PUBLIC' | 'CONNECTIONS') => setScheduleVisibility(value)}>
+                <SelectTrigger className="mt-1">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="PUBLIC">Public</SelectItem>
+                  <SelectItem value="CONNECTIONS">Connections Only</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            {!canPost && (
+              <div className="p-3 bg-yellow-50 border border-yellow-200 rounded-md">
+                <p className="text-sm text-yellow-800">
+                  <strong>LinkedIn not connected.</strong> Please connect your LinkedIn account in Settings to schedule posts.
+                </p>
+              </div>
+            )}
+            <div className="flex justify-end space-x-2">
+              <Button
+                variant="outline"
+                onClick={handleCancelSchedule}
+                disabled={isScheduling}
+              >
+                Cancel
+              </Button>
+              <Button
+                onClick={handleConfirmSchedule}
+                disabled={isScheduling || !canPost}
+                className="bg-blue-600 hover:bg-blue-700"
+              >
+                {isScheduling ? 'Scheduling...' : 'Schedule Post'}
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
 
       {/* Mobile Bottom Navigation */}
       <MobileBottomNav />
