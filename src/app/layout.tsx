@@ -41,6 +41,7 @@ import { Inter, Fraunces } from "next/font/google";
 import "./globals.css";
 import { Toaster } from "@/components/ui/sonner";
 import { Suspense } from "react";
+import { ErrorBoundary } from "@/components/error-boundary";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -70,11 +71,13 @@ export default function RootLayout({
       <body
         className={`font-sans ${inter.variable} ${fraunces.variable} antialiased`}
       >
-        <Suspense fallback={<div className="flex items-center justify-center min-h-screen">
-          <div className="animate-pulse-subtle text-muted-foreground">Loading...</div>
-        </div>}>
-          {children}
-        </Suspense>
+        <ErrorBoundary>
+          <Suspense fallback={<div className="flex items-center justify-center min-h-screen">
+            <div className="animate-pulse-subtle text-muted-foreground">Loading...</div>
+          </div>}>
+            {children}
+          </Suspense>
+        </ErrorBoundary>
         <Toaster />
       </body>
     </html>
