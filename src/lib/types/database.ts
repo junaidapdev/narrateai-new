@@ -20,6 +20,10 @@ export interface Database {
           trial_minutes_used: number
           subscription_plan: string | null
           subscription_end_date: string | null
+          customer_portal_url: string | null
+          lemon_customer_id: string | null
+          cancellation_reason: string | null
+          cancellation_feedback: string | null
           created_at: string
           updated_at: string
         }
@@ -33,6 +37,10 @@ export interface Database {
           trial_minutes_used?: number
           subscription_plan?: string | null
           subscription_end_date?: string | null
+          customer_portal_url?: string | null
+          lemon_customer_id?: string | null
+          cancellation_reason?: string | null
+          cancellation_feedback?: string | null
           created_at?: string
           updated_at?: string
         }
@@ -46,6 +54,10 @@ export interface Database {
           trial_minutes_used?: number
           subscription_plan?: string | null
           subscription_end_date?: string | null
+          customer_portal_url?: string | null
+          lemon_customer_id?: string | null
+          cancellation_reason?: string | null
+          cancellation_feedback?: string | null
           created_at?: string
           updated_at?: string
         }

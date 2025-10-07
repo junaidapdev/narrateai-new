@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { createClient } from '@/lib/supabase/client'
-import { Subscription, TrialUsage } from '@/lib/types'
+import { Subscription, TrialUsage, CancellationData, CustomerPortalResponse } from '@/lib/types'
 
 export function useSubscription() {
   const [subscription, setSubscription] = useState<Subscription | null>(null)
@@ -39,6 +39,10 @@ export function useSubscription() {
           trial_minutes_used: data.trial_minutes_used || 0,
           subscription_plan: data.subscription_plan,
           subscription_end_date: data.subscription_end_date,
+          customer_portal_url: data.customer_portal_url,
+          lemon_customer_id: data.lemon_customer_id,
+          cancellation_reason: data.cancellation_reason,
+          cancellation_feedback: data.cancellation_feedback,
           created_at: data.created_at,
           updated_at: data.updated_at
         }
@@ -131,12 +135,86 @@ export function useSubscription() {
     }
   }
 
+  const getCustomerPortalUrl = async (): Promise<string | null> => {
+    try {
+      const response = await fetch('/api/subscription/portal', {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      })
+
+      if (!response.ok) {
+        console.error('Error fetching customer portal URL')
+        return null
+      }
+
+      const data: CustomerPortalResponse = await response.json()
+      return data.url
+    } catch (error) {
+      console.error('Error fetching customer portal URL:', error)
+      return null
+    }
+  }
+
+  const cancelSubscription = async (cancellationData: CancellationData): Promise<boolean> => {
+    try {
+      const response = await fetch('/api/subscription/cancel', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(cancellationData),
+      })
+
+      if (!response.ok) {
+        console.error('Error cancelling subscription')
+        return false
+      }
+
+      // Refresh subscription data
+      await fetchSubscription()
+      return true
+    } catch (error) {
+      console.error('Error cancelling subscription:', error)
+      return false
+    }
+  }
+
+  const saveCancellationFeedback = async (feedback: string): Promise<boolean> => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) return false
+
+      const { error } = await supabase
+        .from('profiles')
+        .update({ 
+          cancellation_feedback: feedback,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', user.id)
+
+      if (error) {
+        console.error('Error saving cancellation feedback:', error)
+        return false
+      }
+
+      return true
+    } catch (error) {
+      console.error('Error saving cancellation feedback:', error)
+      return false
+    }
+  }
+
   return {
     subscription,
     trialUsage,
     loading,
     updateTrialUsage,
     updateSubscription,
+    getCustomerPortalUrl,
+    cancelSubscription,
+    saveCancellationFeedback,
     refetch: fetchSubscription
   }
 }

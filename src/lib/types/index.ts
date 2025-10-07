@@ -53,6 +53,10 @@ export interface Subscription {
   trial_minutes_used: number
   subscription_plan?: 'monthly' | 'yearly'
   subscription_end_date?: string
+  customer_portal_url?: string
+  lemon_customer_id?: string
+  cancellation_reason?: string
+  cancellation_feedback?: string
   created_at: string
   updated_at: string
 }
@@ -62,6 +66,23 @@ export interface TrialUsage {
   minutes_limit: number
   is_trial: boolean
   can_record: boolean
+}
+
+// Cancellation types
+export interface CancellationReason {
+  id: string
+  label: string
+  value: string
+}
+
+export interface CancellationData {
+  reason: string
+  feedback?: string
+}
+
+export interface CustomerPortalResponse {
+  url: string
+  expires_at: string
 }
 
 // API Response types

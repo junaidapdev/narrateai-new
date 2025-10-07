@@ -13,9 +13,10 @@ import { Badge } from "@/components/ui/badge"
 import Link from "next/link"
 import { useAuth } from "@/lib/hooks/useAuth"
 import { useSubscription } from "@/lib/hooks/useSubscription"
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { useLinkedIn } from "@/lib/hooks/useLinkedIn"
 import { getInitials } from "@/lib/utils"
-import { User, Settings, CreditCard, LogOut, Mail, Trash2, Target, Users, TrendingUp, ShoppingCart, Sparkles, Linkedin, CheckCircle, XCircle } from "lucide-react"
+import { User, Settings, CreditCard, LogOut, Mail, Trash2, Target, Users, TrendingUp, ShoppingCart, Sparkles, Linkedin, CheckCircle, XCircle, AlertTriangle, X } from "lucide-react"
 import { toast } from 'sonner'
 import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
@@ -24,11 +25,17 @@ import { DashboardHeader } from '@/components/dashboard-header'
 
 export default function SettingsPage() {
   const { user, loading: authLoading } = useAuth()
-  const { subscription, loading: subscriptionLoading } = useSubscription()
+  const { subscription, loading: subscriptionLoading, getCustomerPortalUrl, cancelSubscription, saveCancellationFeedback } = useSubscription()
   const { connection: linkedinConnection, loading: linkedinLoading, connectLinkedIn, disconnectLinkedIn } = useLinkedIn()
   const [fullName, setFullName] = useState(user?.user_metadata?.full_name || '')
   const [email, setEmail] = useState(user?.email || '')
   const [isUpdating, setIsUpdating] = useState(false)
+  
+  // Cancellation state
+  const [showCancellationModal, setShowCancellationModal] = useState(false)
+  const [cancellationReason, setCancellationReason] = useState('')
+  const [cancellationFeedback, setCancellationFeedback] = useState('')
+  const [isCancelling, setIsCancelling] = useState(false)
   
   // LinkedIn OAuth result handling
   useEffect(() => {
@@ -101,6 +108,17 @@ export default function SettingsPage() {
     'Other'
   ]
 
+  // Cancellation reasons
+  const cancellationReasons = [
+    { value: 'too_expensive', label: 'Too expensive' },
+    { value: 'not_using', label: 'Not using the service enough' },
+    { value: 'found_alternative', label: 'Found a better alternative' },
+    { value: 'technical_issues', label: 'Technical issues' },
+    { value: 'missing_features', label: 'Missing features I need' },
+    { value: 'customer_support', label: 'Poor customer support' },
+    { value: 'other', label: 'Other reason' }
+  ]
+
   // Fetch user profile data
   useEffect(() => {
     const fetchProfile = async () => {
@@ -138,6 +156,58 @@ export default function SettingsPage() {
       router.push('/')
     } catch (error) {
       toast.error('Failed to sign out')
+    }
+  }
+
+  // Cancellation handlers
+  const handleOpenCancellationModal = () => {
+    setShowCancellationModal(true)
+  }
+
+  const handleCloseCancellationModal = () => {
+    setShowCancellationModal(false)
+    setCancellationReason('')
+    setCancellationFeedback('')
+  }
+
+  const handleCancelSubscription = async () => {
+    if (!cancellationReason) {
+      toast.error('Please select a reason for cancellation')
+      return
+    }
+
+    setIsCancelling(true)
+    try {
+      const success = await cancelSubscription({
+        reason: cancellationReason,
+        feedback: cancellationFeedback
+      })
+
+      if (success) {
+        toast.success('Subscription cancelled successfully')
+        handleCloseCancellationModal()
+      } else {
+        toast.error('Failed to cancel subscription. Please try again.')
+      }
+    } catch (error) {
+      console.error('Error cancelling subscription:', error)
+      toast.error('Failed to cancel subscription. Please try again.')
+    } finally {
+      setIsCancelling(false)
+    }
+  }
+
+  const handleManageBilling = async () => {
+    try {
+      const portalUrl = await getCustomerPortalUrl()
+      if (portalUrl) {
+        window.open(portalUrl, '_blank')
+      } else {
+        toast.error('Unable to access billing portal. Please try again.')
+      }
+    } catch (error) {
+      console.error('Error accessing billing portal:', error)
+      toast.error('Unable to access billing portal. Please try again.')
     }
   }
 
@@ -611,13 +681,22 @@ export default function SettingsPage() {
                           Upgrade to Pro
                         </Button>
                       ) : subscription.subscription_status === 'active' ? (
-                        <Button 
-                          onClick={() => router.push('/pricing')}
-                          variant="outline" 
-                          className="w-full border-border hover:bg-muted"
-                        >
-                          Manage Subscription
-                        </Button>
+                        <div className="space-y-2">
+                          <Button 
+                            onClick={handleManageBilling}
+                            variant="outline" 
+                            className="w-full border-border hover:bg-muted"
+                          >
+                            Manage Billing
+                          </Button>
+                          <Button 
+                            onClick={handleOpenCancellationModal}
+                            variant="outline" 
+                            className="w-full border-red-200 text-red-600 hover:bg-red-50"
+                          >
+                            Cancel Subscription
+                          </Button>
+                        </div>
                       ) : (
                         <Button 
                           onClick={() => router.push('/pricing')}
@@ -647,6 +726,86 @@ export default function SettingsPage() {
 
       {/* Mobile Bottom Navigation */}
       <MobileBottomNav />
+
+      {/* Cancellation Modal */}
+      <Dialog open={showCancellationModal} onOpenChange={setShowCancellationModal}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <AlertTriangle className="h-5 w-5 text-red-500" />
+              Cancel Subscription
+            </DialogTitle>
+            <DialogDescription>
+              We're sorry to see you go. Please let us know why you're cancelling so we can improve our service.
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="cancellation-reason" className="text-sm font-medium">
+                Why are you cancelling?
+              </Label>
+              <Select value={cancellationReason} onValueChange={setCancellationReason}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select a reason" />
+                </SelectTrigger>
+                <SelectContent>
+                  {cancellationReasons.map((reason) => (
+                    <SelectItem key={reason.value} value={reason.value}>
+                      {reason.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="cancellation-feedback" className="text-sm font-medium">
+                Additional feedback (optional)
+              </Label>
+              <Textarea
+                id="cancellation-feedback"
+                placeholder="Tell us more about your experience..."
+                value={cancellationFeedback}
+                onChange={(e) => setCancellationFeedback(e.target.value)}
+                className="min-h-[80px] resize-none"
+                maxLength={500}
+              />
+              <div className="text-xs text-muted-foreground text-right">
+                {cancellationFeedback.length}/500
+              </div>
+            </div>
+
+            <div className="p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
+              <div className="flex items-start gap-2">
+                <AlertTriangle className="h-4 w-4 text-yellow-600 mt-0.5" />
+                <div className="text-sm text-yellow-800">
+                  <p className="font-medium">Important:</p>
+                  <p>Your subscription will remain active until the end of your current billing period. You'll continue to have access to all features until then.</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <DialogFooter className="flex-col sm:flex-row gap-2">
+            <Button
+              variant="outline"
+              onClick={handleCloseCancellationModal}
+              disabled={isCancelling}
+              className="w-full sm:w-auto"
+            >
+              Keep Subscription
+            </Button>
+            <Button
+              onClick={handleCancelSubscription}
+              disabled={isCancelling || !cancellationReason}
+              className="w-full sm:w-auto bg-red-600 hover:bg-red-700 text-white"
+            >
+              {isCancelling ? 'Cancelling...' : 'Cancel Subscription'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

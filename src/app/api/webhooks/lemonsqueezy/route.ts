@@ -38,6 +38,9 @@ interface WebhookPayload {
       variant_id?: number;
       customer_id?: number;
       order_id?: number;
+      cancelled_at?: string;
+      ends_at?: string;
+      renews_at?: string;
       urls?: {
         customer_portal?: string;
         update_payment_method?: string;
@@ -111,6 +114,14 @@ export async function POST(request: NextRequest) {
         await handleSubscriptionCancelled(payload, supabase);
         break;
         
+      case 'subscription_paused':
+        await handleSubscriptionPaused(payload, supabase);
+        break;
+        
+      case 'subscription_resumed':
+        await handleSubscriptionResumed(payload, supabase);
+        break;
+        
       default:
         console.log(`Unhandled event type: ${eventName}`);
     }
@@ -170,7 +181,8 @@ async function handleSubscriptionCreated(payload: WebhookPayload, supabase: any)
     status, 
     customer_id,
     product_id,
-    variant_id
+    variant_id,
+    urls
   } = data.attributes;
   
   console.log(`Subscription created for ${user_email}`);
@@ -249,16 +261,28 @@ async function handleSubscriptionCreated(payload: WebhookPayload, supabase: any)
   // Determine subscription plan
   const plan = variant_id === 2 ? 'yearly' : 'monthly'; // Adjust based on your variant IDs
   
-  // Update user subscription status
+  // Update user subscription status with enhanced data
+  const updateData: any = {
+    subscription_status: 'active',
+    subscription_id: data.id,
+    subscription_plan: plan,
+    subscription_end_date: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
+    updated_at: new Date().toISOString()
+  };
+
+  // Add customer ID if available
+  if (customer_id) {
+    updateData.lemon_customer_id = customer_id.toString();
+  }
+
+  // Add customer portal URL if available
+  if (urls?.customer_portal) {
+    updateData.customer_portal_url = urls.customer_portal;
+  }
+
   const { error: updateError } = await supabase
     .from('profiles')
-    .update({
-      subscription_status: 'active',
-      subscription_id: data.id,
-      subscription_plan: plan,
-      subscription_end_date: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
-      updated_at: new Date().toISOString()
-    })
+    .update(updateData)
     .eq('id', profile.id);
 
   if (updateError) {
@@ -275,7 +299,8 @@ async function handleSubscriptionUpdated(payload: WebhookPayload, supabase: any)
   const { 
     user_email, 
     status,
-    customer_id 
+    customer_id,
+    urls
   } = data.attributes;
   
   console.log(`Subscription updated for ${user_email}`);
@@ -303,13 +328,25 @@ async function handleSubscriptionUpdated(payload: WebhookPayload, supabase: any)
     return;
   }
 
-  // Update subscription status
+  // Update subscription status with enhanced data
+  const updateData: any = {
+    subscription_status: status === 'active' ? 'active' : 'cancelled',
+    updated_at: new Date().toISOString()
+  };
+
+  // Add customer ID if available
+  if (customer_id) {
+    updateData.lemon_customer_id = customer_id.toString();
+  }
+
+  // Add customer portal URL if available
+  if (urls?.customer_portal) {
+    updateData.customer_portal_url = urls.customer_portal;
+  }
+
   const { error: updateError } = await supabase
     .from('profiles')
-    .update({
-      subscription_status: status === 'active' ? 'active' : 'cancelled',
-      updated_at: new Date().toISOString()
-    })
+    .update(updateData)
     .eq('id', profile.id);
 
   if (updateError) {
@@ -320,12 +357,20 @@ async function handleSubscriptionUpdated(payload: WebhookPayload, supabase: any)
   console.log('Subscription update successfully processed for:', user_email);
 }
 
-// Handle subscription cancellation
+// Handle subscription cancellation with enhanced data tracking
 async function handleSubscriptionCancelled(payload: WebhookPayload, supabase: any) {
   const { data } = payload;
-  const { user_email, customer_id } = data.attributes;
+  const { 
+    user_email, 
+    customer_id, 
+    cancelled_at, 
+    ends_at,
+    urls
+  } = data.attributes;
   
   console.log(`Subscription cancelled for ${user_email}`);
+  console.log(`Cancelled at: ${cancelled_at}`);
+  console.log(`Ends at: ${ends_at}`);
   
   if (!user_email) {
     console.log('No user email found in subscription cancellation');
@@ -349,13 +394,42 @@ async function handleSubscriptionCancelled(payload: WebhookPayload, supabase: an
     return;
   }
 
-  // Update subscription status
+  // Prepare comprehensive cancellation data
+  const updateData: any = {
+    subscription_status: 'cancelled',
+    updated_at: new Date().toISOString()
+  };
+
+  // Add customer ID if available
+  if (customer_id) {
+    updateData.lemon_customer_id = customer_id.toString();
+  }
+
+  // Add customer portal URL if available
+  if (urls?.customer_portal) {
+    updateData.customer_portal_url = urls.customer_portal;
+  }
+
+  // Add cancellation timestamp if available
+  if (cancelled_at) {
+    updateData.cancelled_at = cancelled_at;
+  }
+
+  // Update subscription end date if available
+  if (ends_at) {
+    updateData.subscription_end_date = ends_at;
+  }
+
+  // If no cancellation reason was provided by user, set a default
+  if (!profile.cancellation_reason) {
+    updateData.cancellation_reason = 'webhook_cancelled';
+    updateData.cancellation_feedback = 'Subscription cancelled via LemonSqueezy webhook';
+  }
+
+  // Update subscription with enhanced cancellation data
   const { error: updateError } = await supabase
     .from('profiles')
-    .update({
-      subscription_status: 'cancelled',
-      updated_at: new Date().toISOString()
-    })
+    .update(updateData)
     .eq('id', profile.id);
 
   if (updateError) {
@@ -363,7 +437,137 @@ async function handleSubscriptionCancelled(payload: WebhookPayload, supabase: an
     return;
   }
 
+  // Log comprehensive cancellation data
   console.log('Subscription cancellation successfully processed for:', user_email);
+  console.log('Cancellation data:', {
+    user_id: profile.id,
+    customer_id,
+    cancelled_at,
+    ends_at,
+    has_portal_url: !!urls?.customer_portal,
+    existing_reason: profile.cancellation_reason,
+    existing_feedback: profile.cancellation_feedback
+  });
+
+  // TODO: Send cancellation notification email
+  // TODO: Update analytics/metrics
+  // TODO: Trigger any post-cancellation workflows
+}
+
+// Handle subscription paused
+async function handleSubscriptionPaused(payload: WebhookPayload, supabase: any) {
+  const { data } = payload;
+  const { user_email, customer_id, urls } = data.attributes;
+  
+  console.log(`Subscription paused for ${user_email}`);
+  
+  if (!user_email) {
+    console.log('No user email found in subscription pause');
+    return;
+  }
+
+  // Find user by email
+  let { data: profile, error: findError } = await supabase
+    .from('profiles')
+    .select('*')
+    .ilike('email', user_email)
+    .maybeSingle();
+
+  if (findError) {
+    console.error('Error finding user:', findError);
+    return;
+  }
+
+  if (!profile) {
+    console.log('User not found for email:', user_email);
+    return;
+  }
+
+  // Update subscription status to paused
+  const updateData: any = {
+    subscription_status: 'paused',
+    updated_at: new Date().toISOString()
+  };
+
+  // Add customer ID if available
+  if (customer_id) {
+    updateData.lemon_customer_id = customer_id.toString();
+  }
+
+  // Add customer portal URL if available
+  if (urls?.customer_portal) {
+    updateData.customer_portal_url = urls.customer_portal;
+  }
+
+  const { error: updateError } = await supabase
+    .from('profiles')
+    .update(updateData)
+    .eq('id', profile.id);
+
+  if (updateError) {
+    console.error('Error updating subscription:', updateError);
+    return;
+  }
+
+  console.log('Subscription pause successfully processed for:', user_email);
+}
+
+// Handle subscription resumed
+async function handleSubscriptionResumed(payload: WebhookPayload, supabase: any) {
+  const { data } = payload;
+  const { user_email, customer_id, urls } = data.attributes;
+  
+  console.log(`Subscription resumed for ${user_email}`);
+  
+  if (!user_email) {
+    console.log('No user email found in subscription resume');
+    return;
+  }
+
+  // Find user by email
+  let { data: profile, error: findError } = await supabase
+    .from('profiles')
+    .select('*')
+    .ilike('email', user_email)
+    .maybeSingle();
+
+  if (findError) {
+    console.error('Error finding user:', findError);
+    return;
+  }
+
+  if (!profile) {
+    console.log('User not found for email:', user_email);
+    return;
+  }
+
+  // Update subscription status to active
+  const updateData: any = {
+    subscription_status: 'active',
+    updated_at: new Date().toISOString()
+  };
+
+  // Add customer ID if available
+  if (customer_id) {
+    updateData.lemon_customer_id = customer_id.toString();
+  }
+
+  // Add customer portal URL if available
+  if (urls?.customer_portal) {
+    updateData.customer_portal_url = urls.customer_portal;
+  }
+
+  const { error: updateError } = await supabase
+    .from('profiles')
+    .update(updateData)
+    .eq('id', profile.id);
+
+  if (updateError) {
+    console.error('Error updating subscription:', updateError);
+    return;
+  }
+
+  console.log('Subscription resume successfully processed for:', user_email);
 }
 
 export async function GET() {
