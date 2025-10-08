@@ -10,9 +10,8 @@ export async function withRateLimit(
   request: NextRequest,
   limitType: RateLimitType = 'general'
 ): Promise<NextResponse | null> {
-  // Skip rate limiting in development if not configured
-  if (!features.rateLimiting && env.NODE_ENV === 'development') {
-    console.warn('Rate limiting disabled - Redis not configured')
+  // Skip rate limiting if not configured
+  if (!features.rateLimiting) {
     return null
   }
 

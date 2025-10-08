@@ -1,14 +1,16 @@
 import { Ratelimit } from '@upstash/ratelimit'
 import { Redis } from '@upstash/redis'
 
-// Create Redis instance
-const redis = new Redis({
-  url: process.env.UPSTASH_REDIS_REST_URL!,
-  token: process.env.UPSTASH_REDIS_REST_TOKEN!,
-})
+// Create Redis instance (with fallback for missing config)
+const redis = process.env.UPSTASH_REDIS_REST_URL && process.env.UPSTASH_REDIS_REST_TOKEN
+  ? new Redis({
+      url: process.env.UPSTASH_REDIS_REST_URL,
+      token: process.env.UPSTASH_REDIS_REST_TOKEN,
+    })
+  : null
 
 // Rate limit configurations for different endpoints
-export const rateLimits = {
+export const rateLimits = redis ? {
   // General API endpoints - 100 requests per minute
   general: new Ratelimit({
     redis,
@@ -50,7 +52,7 @@ export const rateLimits = {
     limiter: Ratelimit.slidingWindow(10, '1 m'),
     analytics: true,
   }),
-}
+} : null
 
 // Helper function to get client IP
 export function getClientIP(request: Request): string {
@@ -76,8 +78,13 @@ export function getClientIP(request: Request): string {
 // Rate limit middleware
 export async function checkRateLimit(
   request: Request,
-  limitType: keyof typeof rateLimits
+  limitType: keyof NonNullable<typeof rateLimits>
 ): Promise<{ success: boolean; limit: number; remaining: number; reset: number }> {
+  // If rate limiting is not configured, allow all requests
+  if (!rateLimits) {
+    return { success: true, limit: 0, remaining: 0, reset: 0 }
+  }
+  
   const ip = getClientIP(request)
   const { success, limit, remaining, reset } = await rateLimits[limitType].limit(ip)
   
