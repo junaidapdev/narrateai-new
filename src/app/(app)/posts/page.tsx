@@ -15,7 +15,7 @@ import { usePosts } from "@/lib/hooks/usePosts"
 import { useLinkedIn } from "@/lib/hooks/useLinkedIn"
 import { useLinkedInPosting } from "@/lib/hooks/useLinkedInPosting"
 import { formatDate } from "@/lib/utils"
-import { FileText, Edit, Trash2, Eye, Copy, Clock, Calendar } from "lucide-react"
+import { FileText, Edit, Trash2, Eye, Copy, Clock, Calendar, Info } from "lucide-react"
 import { toast } from 'sonner'
 import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
@@ -40,6 +40,8 @@ export default function PostsPage() {
   const [scheduleTime, setScheduleTime] = useState('')
   const [scheduleVisibility, setScheduleVisibility] = useState<'PUBLIC' | 'CONNECTIONS'>('PUBLIC')
   const [isScheduling, setIsScheduling] = useState(false)
+  const [showTooltip, setShowTooltip] = useState<string | null>(null)
+  const [previewPost, setPreviewPost] = useState<any>(null)
   
   const router = useRouter()
   const supabase = createClient()
@@ -107,6 +109,10 @@ export default function PostsPage() {
     } catch (error) {
       toast.error('Failed to copy post')
     }
+  }
+
+  const handlePreviewPost = (post: any) => {
+    setPreviewPost(post)
   }
 
   if (authLoading) {
@@ -415,65 +421,73 @@ export default function PostsPage() {
                                 {post.hook}
                               </p>
                           </div>
-                          <div className="flex items-center space-x-2 ml-4">
-                            {/* <Badge 
-                              className={`${
-                                post.status === 'published' 
-                                  ? 'bg-green-100 text-green-800 border-green-200' 
-                                  : post.status === 'draft'
-                                  ? 'bg-orange-100 text-orange-800 border-orange-200'
-                                  : 'bg-gray-100 text-gray-800 border-gray-200'
-                              }`}
-                            >
-                              {post.status === 'published' ? 'Published' : post.status === 'draft' ? 'Draft' : post.status}
-                            </Badge> */}
-                          <div className="flex items-center space-x-2 sm:space-x-1">
-                                <Button
-                                  variant="ghost"
-                                  size="sm"
-                                  onClick={() => handleCopyPost(post)}
-                                  title="Copy to clipboard"
-                                  className="text-gray-500 hover:text-gray-700 hover:bg-gray-100 px-1 py-1 h-7 w-7"
-                                  
-                                >
-                                  <Copy className="h-3 w-3" />
-                                </Button>
-                                <Button
-                                  variant="ghost"
-                                  size="sm"
-                                  onClick={() => handleEditPost(post)}
-                                  title="Edit post"
-                                  className="text-gray-500 hover:text-gray-700 hover:bg-gray-100 px-1 py-1 h-7 w-7"
-                                >
-                                  <Edit className="h-3 w-3" />
-                                </Button>
-                                {post.status === 'draft' && (
-                                  <>
-                                    <Button
-                                      variant="ghost"
-                                      size="sm"
-                                      onClick={() => handlePublishPost(post.id)}
-                                      title="Mark this draft as published"
-                                      className="border border-green-200 text-green-700 hover:bg-green-50 px-3 py-1 h-7 text-xs font-medium"
-                                    >
-                                      Mark as Published
-                                    </Button>
-                                    <Button
-                                      variant="ghost"
-                                      size="sm"
-                                      onClick={() => handleSchedulePost(post)}
-                                      title={canPost ? "Schedule this post for LinkedIn" : "Connect LinkedIn to schedule posts"}
-                                      className={`border border-blue-200 text-blue-700 hover:bg-blue-50 px-3 py-1 h-7 text-xs font-medium ${!canPost ? 'opacity-50' : ''}`}
-                                      disabled={!canPost}
-                                    >
-                                      <Clock className="h-3 w-3 mr-1" />
-                                      Schedule
-                                    </Button>
-                                  </>
-                                )}
-                                {post.status === 'scheduled' && (
-                                  <div className="flex items-center text-xs text-blue-600">
-                                    <Calendar className="h-3 w-3 mr-1" />
+                          <div className="flex flex-col sm:flex-row items-end sm:items-center space-y-2 sm:space-y-0 sm:space-x-2 ml-4">
+                            {/* Mobile: Stack buttons vertically, Desktop: Horizontal */}
+                            <div className="flex items-center space-x-1">
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => handleCopyPost(post)}
+                                title="Copy to clipboard"
+                                className="text-gray-500 hover:text-gray-700 hover:bg-gray-100 px-1 py-1 h-7 w-7"
+                              >
+                                <Copy className="h-3 w-3" />
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => handlePreviewPost(post)}
+                                title="Preview post"
+                                className="text-gray-500 hover:text-gray-700 hover:bg-gray-100 px-1 py-1 h-7 w-7"
+                              >
+                                <Eye className="h-3 w-3" />
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => handleEditPost(post)}
+                                title="Edit post"
+                                className="text-gray-500 hover:text-gray-700 hover:bg-gray-100 px-1 py-1 h-7 w-7"
+                              >
+                                <Edit className="h-3 w-3" />
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => handleDeletePost(post.id)}
+                                title="Delete post"
+                                className="text-red-500 hover:text-red-700 hover:bg-red-50 px-1 py-1 h-7 w-7"
+                              >
+                                <Trash2 className="h-3 w-3" />
+                              </Button>
+                            </div>
+                            
+                            {/* Action buttons - stack vertically on mobile */}
+                            <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
+                              {post.status === 'draft' && (
+                                <div className="w-full sm:w-auto relative">
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={() => canPost ? handleSchedulePost(post) : setShowTooltip(showTooltip === post.id ? null : post.id)}
+                                    title={canPost ? "Schedule this post for LinkedIn" : "Connect LinkedIn in Settings to schedule posts"}
+                                    className={`border border-blue-200 text-blue-700 hover:bg-blue-50 px-3 py-1 h-7 text-xs font-medium w-full sm:w-auto ${!canPost ? 'opacity-50' : ''}`}
+                                  >
+                                    <Clock className="h-3 w-3 mr-1" />
+                                    Schedule
+                                  </Button>
+                                  {!canPost && showTooltip === post.id && (
+                                    <div className="absolute bottom-full left-0 sm:left-1/2 sm:transform sm:-translate-x-1/2 mb-2 px-3 py-2 bg-primary text-primary-foreground text-xs rounded-lg shadow-lg z-10 animate-in fade-in-0 zoom-in-95 duration-200 whitespace-nowrap">
+                                      Go to Settings <br /> to connect LinkedIn
+                                      <div className="absolute top-full left-4 sm:left-1/2 sm:transform sm:-translate-x-1/2 border-4 border-transparent border-t-primary"></div>
+                                    </div>
+                                  )}
+                                </div>
+                              )}
+                              {post.status === 'scheduled' && (
+                                <div className="flex items-center text-xs text-blue-600 bg-blue-50 px-2 py-1 rounded w-full sm:w-auto">
+                                  <Calendar className="h-3 w-3 mr-1" />
+                                  <span className="truncate">
                                     {post.scheduled_at && new Date(post.scheduled_at).toLocaleString('en-US', {
                                       timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
                                       year: 'numeric',
@@ -482,19 +496,11 @@ export default function PostsPage() {
                                       hour: '2-digit',
                                       minute: '2-digit'
                                     })}
-                                  </div>
-                                )}
-                                <Button
-                                  variant="ghost"
-                                  size="sm"
-                                  onClick={() => handleDeletePost(post.id)}
-                                  title="Delete post"
-                                  className="text-red-500 hover:text-red-700 hover:bg-red-50 px-1 py-1 h-7 w-7"
-                                >
-                                  <Trash2 className="h-3 w-3" />
-                                </Button>
+                                  </span>
                                 </div>
-                              </div>
+                              )}
+                            </div>
+                          </div>
                             </div>
                       </div>
                     )}
@@ -571,6 +577,86 @@ export default function PostsPage() {
               </Button>
             </div>
           </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Preview Modal */}
+      <Dialog open={!!previewPost} onOpenChange={(open) => !open && setPreviewPost(null)}>
+        <DialogContent className="w-[90vw] max-w-md sm:max-w-2xl max-h-[80vh] overflow-y-auto animate-in zoom-in-95 duration-300 mx-auto rounded-3xl">
+          <DialogHeader>
+            <DialogTitle>Post Preview</DialogTitle>
+            <DialogDescription>
+              How your post will appear on LinkedIn
+            </DialogDescription>
+          </DialogHeader>
+          {previewPost && (
+            <div className="space-y-4">
+              {/* LinkedIn-style preview */}
+              <div className="bg-white border border-gray-200 rounded-xl shadow-sm">
+                <div className="flex items-center space-x-3 p-4 border-b border-gray-100">
+                  <div className="w-8 h-8 bg-gradient-to-br from-[#0A66C2] to-[#004182] rounded-full flex items-center justify-center flex-shrink-0">
+                    <span className="text-white font-semibold text-xs">You</span>
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <p className="font-semibold text-gray-900 text-sm truncate">Your Name</p>
+                    <p className="text-xs text-gray-500">LinkedIn</p>
+                  </div>
+                </div>
+                
+                <div className="p-4 space-y-3">
+                  {previewPost.title && (
+                    <h3 className="text-base font-semibold text-gray-900 break-words leading-tight">
+                      {previewPost.title}
+                    </h3>
+                  )}
+                  
+                  <div className="text-gray-900 whitespace-pre-wrap text-sm break-words leading-relaxed">
+                    {previewPost.hook}
+                  </div>
+                  
+                  <div className="text-gray-900 whitespace-pre-wrap text-sm break-words leading-relaxed">
+                    {previewPost.body}
+                  </div>
+                  
+                  {previewPost.call_to_action && (
+                    <div className="text-gray-900 font-medium whitespace-pre-wrap text-sm break-words leading-relaxed">
+                      {previewPost.call_to_action}
+                    </div>
+                  )}
+                </div>
+              </div>
+              
+              {/* Post details */}
+              <div className="bg-gray-50 rounded-xl p-4">
+                <h4 className="font-semibold text-gray-900 mb-3 text-sm">Post Details</h4>
+                <div className="space-y-3 text-xs">
+                  <div className="flex flex-col gap-1">
+                    <span className="text-gray-600 font-medium">Status:</span>
+                    <div className="flex-shrink-0">{getStatusBadge(previewPost.status)}</div>
+                  </div>
+                  <div className="flex flex-col gap-1">
+                    <span className="text-gray-600 font-medium">Created:</span>
+                    <span className="text-gray-900 break-words">{formatDate(previewPost.created_at)}</span>
+                  </div>
+                  {previewPost.scheduled_at && (
+                    <div className="flex flex-col gap-1">
+                      <span className="text-gray-600 font-medium">Scheduled for:</span>
+                      <span className="text-gray-900 break-words">
+                        {new Date(previewPost.scheduled_at).toLocaleString('en-US', {
+                          timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+                          year: 'numeric',
+                          month: 'short',
+                          day: 'numeric',
+                          hour: '2-digit',
+                          minute: '2-digit'
+                        })}
+                      </span>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          )}
         </DialogContent>
       </Dialog>
 

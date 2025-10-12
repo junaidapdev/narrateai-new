@@ -42,7 +42,7 @@ import "./globals.css";
 import { Toaster } from "@/components/ui/sonner";
 import { Suspense } from "react";
 import { ErrorBoundary } from "@/components/error-boundary";
-import { PostHogProvider } from "@/lib/providers/posthog-provider";
+import { Analytics } from "@vercel/analytics/react";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -73,15 +73,14 @@ export default function RootLayout({
         className={`font-sans ${inter.variable} ${fraunces.variable} antialiased`}
       >
         <ErrorBoundary>
-          <PostHogProvider>
-            <Suspense fallback={<div className="flex items-center justify-center min-h-screen">
-              <div className="animate-pulse-subtle text-muted-foreground">Loading...</div>
-            </div>}>
-              {children}
-            </Suspense>
-          </PostHogProvider>
+          <Suspense fallback={<div className="flex items-center justify-center min-h-screen">
+            <div className="animate-pulse-subtle text-muted-foreground">Loading...</div>
+          </div>}>
+            {children}
+          </Suspense>
         </ErrorBoundary>
         <Toaster />
+        <Analytics />
       </body>
     </html>
   );

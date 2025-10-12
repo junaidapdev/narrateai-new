@@ -14,6 +14,7 @@ import { AccountStatus } from '@/components/subscription/AccountStatus'
 import { DashboardHeader } from '@/components/dashboard-header'
 import { StatsGrid } from '@/components/stats-grid'
 import { RecentActivity } from '@/components/recent-activity'
+import { WelcomeModal } from '@/components/WelcomeModal'
 import Link from "next/link"
 import { AlertCircle, ArrowRight, X } from "lucide-react"
 
@@ -28,6 +29,9 @@ export default function DashboardPage() {
   // Onboarding banner state
   const [onboardingDone, setOnboardingDone] = useState<boolean | null>(null)
   const [showBanner, setShowBanner] = useState(true)
+  
+  // Welcome modal state
+  const [showWelcomeModal, setShowWelcomeModal] = useState(false)
 
   // Fetch onboarding status
   useEffect(() => {
@@ -54,6 +58,41 @@ export default function DashboardPage() {
 
     fetchOnboardingStatus()
   }, [user, supabase])
+
+  // Check if user should see welcome modal
+  useEffect(() => {
+    const checkWelcomeModal = () => {
+      // Must have authenticated user (works for email, Google, etc.)
+      if (!user || !user.id) return
+      
+      // Wait for recordings to finish loading
+      if (recordingsLoading) return
+      
+      // Show modal if user has zero recordings and hasn't seen it before
+      // Make localStorage key user-specific to avoid conflicts between different Google accounts
+      const hasSeenWelcome = localStorage.getItem(`narrate_welcome_seen_${user.id}`)
+      const hasRecordings = recordings && recordings.length > 0
+      
+      // Show modal for any authenticated user (email, Google, etc.) with zero recordings
+      if (!hasSeenWelcome && !hasRecordings) {
+        setShowWelcomeModal(true)
+      }
+    }
+
+    checkWelcomeModal()
+  }, [user, recordings, recordingsLoading])
+
+  const handleStartRecording = () => {
+    router.push('/recording')
+  }
+
+  const handleCloseWelcomeModal = () => {
+    setShowWelcomeModal(false)
+    // Make localStorage key user-specific to avoid conflicts between different Google accounts
+    if (user?.id) {
+      localStorage.setItem(`narrate_welcome_seen_${user.id}`, 'true')
+    }
+  }
 
   const handleSignOut = async () => {
     try {
@@ -135,6 +174,7 @@ export default function DashboardPage() {
 
       <main className="mx-auto max-w-7xl px-6 py-8 md:px-8 lg:px-12">
 
+
         {/* Account Status */}
         <div className="mb-12">
           <AccountStatus
@@ -163,8 +203,15 @@ export default function DashboardPage() {
         />
       </main>
 
-      {/* Mobile Bottom Navigation */}
-      <MobileBottomNav />
-    </div>
-  )
-}
+        {/* Mobile Bottom Navigation */}
+        <MobileBottomNav />
+
+        {/* Welcome Modal */}
+        <WelcomeModal
+          isOpen={showWelcomeModal}
+          onClose={handleCloseWelcomeModal}
+          onStartRecording={handleStartRecording}
+        />
+      </div>
+    )
+  }

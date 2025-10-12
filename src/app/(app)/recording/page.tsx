@@ -37,6 +37,10 @@ export default function RecordingPage() {
   const [title, setTitle] = useState('')
   const [description, setDescription] = useState('')
   
+  // Processing states
+  const [isProcessing, setIsProcessing] = useState(false)
+  const [displayText, setDisplayText] = useState('')
+  
   // Subscription states
   const [showPaywall, setShowPaywall] = useState(false)
   
@@ -74,6 +78,26 @@ export default function RecordingPage() {
       audioRef.current.onended = () => setIsPlaying(false)
     }
   }, [audioUrl])
+
+  // Typing animation effect
+  useEffect(() => {
+    if (isProcessing) {
+      const text = "Processing audio..."
+      let index = 0
+      setDisplayText('')
+      
+      const typeInterval = setInterval(() => {
+        if (index < text.length) {
+          setDisplayText(text.slice(0, index + 1))
+          index++
+        } else {
+          clearInterval(typeInterval)
+        }
+      }, 100)
+      
+      return () => clearInterval(typeInterval)
+    }
+  }, [isProcessing])
 
   const handleSignOut = async () => {
     try {
@@ -323,6 +347,8 @@ export default function RecordingPage() {
       return
     }
 
+    setIsProcessing(true)
+
     try {
       // Upload audio file to Supabase Storage
       const fileName = `recording-${Date.now()}.webm`
@@ -376,6 +402,8 @@ export default function RecordingPage() {
         error: error
       })
       toast.error('Failed to save recording')
+    } finally {
+      setIsProcessing(false)
     }
   }
   
@@ -566,12 +594,23 @@ export default function RecordingPage() {
                 {/* Done Button */}
                 <Button 
                   onClick={saveRecording}
-                  className="bg-primary hover:bg-primary/90 text-primary-foreground px-6 py-2 rounded-lg shadow-sm hover:shadow-md transition-all duration-200 font-medium"
+                  disabled={isProcessing}
+                  className="bg-primary hover:bg-primary/90 text-primary-foreground px-6 py-2 rounded-lg shadow-sm hover:shadow-md transition-all duration-200 font-medium disabled:opacity-50"
                 >
                   <Save className="h-4 w-4 mr-2" />
                   <span className="hidden sm:inline">Process Audio</span>
                   <span className="sm:hidden">Process</span>
                 </Button>
+                
+                {/* Processing Text */}
+                {isProcessing && (
+                  <div className="text-center mt-4">
+                    <p className="text-sm text-muted-foreground font-mono">
+                      {displayText}
+                      <span className="animate-pulse">|</span>
+                    </p>
+                  </div>
+                )}
               </div>
             )}
 

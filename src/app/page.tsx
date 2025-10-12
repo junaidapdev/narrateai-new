@@ -95,7 +95,10 @@ export default function Home() {
           <div className="mx-auto max-w-4xl text-center">
             <h1 className="text-4xl font-serif font-bold tracking-tight text-foreground sm:text-6xl">
             {/* Your voice. <br /> LinkedIn posts. <br /> Zero writing. */}
-            The fastest way founders create compelling LinkedIn content.
+            {/* The fastest way founders create compelling LinkedIn content. */}
+            Turn 5-minute voice notes into scheduled LinkedIn posts. <br />
+{/* Zero writing. Maximum impact. */}
+
               <span className="block text-primary"></span>
             </h1>
             <p className="mt-6 text-lg leading-8 text-muted-foreground max-w-2xl mx-auto">
@@ -105,7 +108,7 @@ export default function Home() {
               <Link href="/signup">
                 <Button size="lg" className="bg-primary hover:bg-primary/90 text-primary-foreground">
                   <Mic className="mr-2 h-5 w-5" />
-                  Start Recording Free
+                  Record Your First Post
                 </Button>
               </Link>
               <div className="flex items-center gap-2 text-sm text-muted-foreground">

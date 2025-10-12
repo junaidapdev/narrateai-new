@@ -5,13 +5,14 @@ import { Settings, User, Mic, LogOut } from "lucide-react"
 import Link from "next/link"
 import { useAuth } from "@/lib/hooks/useAuth"
 import { createClient } from '@/lib/supabase/client'
-import { useRouter } from 'next/navigation'
+import { useRouter, usePathname } from 'next/navigation'
 import { toast } from 'sonner'
 import { useState, useEffect, useRef } from 'react'
 
 export function DashboardHeader() {
   const { user } = useAuth()
   const router = useRouter()
+  const pathname = usePathname()
   const supabase = createClient()
   const [showUserMenu, setShowUserMenu] = useState(false)
   const menuRef = useRef<HTMLDivElement>(null)
@@ -61,25 +62,41 @@ export function DashboardHeader() {
           <nav className="hidden md:flex items-center gap-8">
             <Link
               href="/dashboard"
-              className="text-sm font-medium text-foreground transition-colors hover:text-muted-foreground"
+              className={`text-sm font-medium transition-colors hover:text-muted-foreground ${
+                pathname === '/dashboard' 
+                  ? 'text-foreground' 
+                  : 'text-muted-foreground'
+              }`}
             >
               Dashboard
             </Link>
             <Link
               href="/recording"
-              className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
+              className={`text-sm font-medium transition-colors hover:text-foreground ${
+                pathname === '/recording' 
+                  ? 'text-foreground' 
+                  : 'text-muted-foreground'
+              }`}
             >
               Recordings
             </Link>
             <Link
               href="/posts"
-              className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
+              className={`text-sm font-medium transition-colors hover:text-foreground ${
+                pathname === '/posts' 
+                  ? 'text-foreground' 
+                  : 'text-muted-foreground'
+              }`}
             >
               Posts
             </Link>
             <Link
               href="/pricing"
-              className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
+              className={`text-sm font-medium transition-colors hover:text-foreground ${
+                pathname === '/pricing' 
+                  ? 'text-foreground' 
+                  : 'text-muted-foreground'
+              }`}
             >
               Pricing
             </Link>
