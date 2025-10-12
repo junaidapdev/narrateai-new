@@ -10,10 +10,14 @@ export async function GET(request: NextRequest) {
       return NextResponse.redirect(new URL('/signin', request.url))
     }
 
+    // Get redirect parameter from query string
+    const { searchParams } = new URL(request.url)
+    const redirectTo = searchParams.get('redirect') || '/settings'
+
     // LinkedIn OAuth parameters
     const clientId = process.env.LINKEDIN_CLIENT_ID
     const redirectUri = process.env.LINKEDIN_REDIRECT_URI || `${process.env.NEXT_PUBLIC_SITE_URL}/api/auth/linkedin/callback`
-    const state = user.id // Use user ID as state for security
+    const state = `${user.id}|${redirectTo}` // Include redirect in state
     
     // Debug logging
     console.log('LinkedIn OAuth Debug:')

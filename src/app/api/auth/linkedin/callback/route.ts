@@ -26,10 +26,14 @@ export async function GET(request: NextRequest) {
       return NextResponse.redirect(new URL('/settings?linkedin_error=missing_parameters', request.url))
     }
 
+    // Extract user ID and redirect from state
+    const [userId, redirectTo] = state.split('|')
+    const finalRedirect = redirectTo || '/settings'
+
     const supabase = await createClient()
     const { data: { user }, error: userError } = await supabase.auth.getUser()
     
-    if (userError || !user || user.id !== state) {
+    if (userError || !user || user.id !== userId) {
       console.error('User authentication failed or state mismatch')
       return NextResponse.redirect(new URL('/signin', request.url))
     }
@@ -99,7 +103,7 @@ export async function GET(request: NextRequest) {
     }
 
     console.log('LinkedIn connection stored successfully')
-    return NextResponse.redirect(new URL('/settings?linkedin_success=connected', request.url))
+    return NextResponse.redirect(new URL(`${finalRedirect}?linkedin_success=connected`, request.url))
   } catch (error) {
     console.error('LinkedIn callback error:', error)
     return NextResponse.redirect(new URL('/settings?linkedin_error=callback_failed', request.url))

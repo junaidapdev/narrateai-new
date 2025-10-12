@@ -80,7 +80,7 @@ export default function RootLayout({
           </Suspense>
         </ErrorBoundary>
         <Toaster />
-        <Analytics />
+                <Analytics />
       </body>
     </html>
   );

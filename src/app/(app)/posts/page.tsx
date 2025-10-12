@@ -42,6 +42,9 @@ export default function PostsPage() {
   const [isScheduling, setIsScheduling] = useState(false)
   const [showTooltip, setShowTooltip] = useState<string | null>(null)
   const [previewPost, setPreviewPost] = useState<any>(null)
+  const [showLinkedInModal, setShowLinkedInModal] = useState(false)
+  const [isConnectingLinkedIn, setIsConnectingLinkedIn] = useState(false)
+  const [linkedInError, setLinkedInError] = useState<string | null>(null)
   
   const router = useRouter()
   const supabase = createClient()
@@ -115,6 +118,27 @@ export default function PostsPage() {
     setPreviewPost(post)
   }
 
+  const handleConnectLinkedIn = async () => {
+    setIsConnectingLinkedIn(true)
+    setLinkedInError(null)
+    
+    try {
+      // Use the same LinkedIn connection flow as Settings (GET method)
+      // Add redirect parameter to go back to posts after connection
+      window.location.href = '/api/auth/linkedin/connect?redirect=/posts'
+    } catch (error) {
+      console.error('LinkedIn connection error:', error)
+      setLinkedInError('Failed to connect to LinkedIn. Please try again.')
+      setIsConnectingLinkedIn(false)
+    }
+  }
+
+  const handleLinkedInModalClose = () => {
+    setShowLinkedInModal(false)
+    setSchedulingPost(null)
+    setLinkedInError(null)
+  }
+
   if (authLoading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
@@ -163,7 +187,10 @@ export default function PostsPage() {
 
   const handleSchedulePost = (post: any) => {
     if (!canPost) {
-      toast.error('LinkedIn not connected. Please connect your LinkedIn account in Settings first.')
+      // Show LinkedIn connection modal instead of tooltip
+      setSchedulingPost(post.id)
+      setShowLinkedInModal(true)
+      setLinkedInError(null)
       return
     }
     
@@ -465,23 +492,17 @@ export default function PostsPage() {
                             {/* Action buttons - stack vertically on mobile */}
                             <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
                               {post.status === 'draft' && (
-                                <div className="w-full sm:w-auto relative">
+                                <div className="w-full sm:w-auto">
                                   <Button
                                     variant="ghost"
                                     size="sm"
-                                    onClick={() => canPost ? handleSchedulePost(post) : setShowTooltip(showTooltip === post.id ? null : post.id)}
-                                    title={canPost ? "Schedule this post for LinkedIn" : "Connect LinkedIn in Settings to schedule posts"}
-                                    className={`border border-blue-200 text-blue-700 hover:bg-blue-50 px-3 py-1 h-7 text-xs font-medium w-full sm:w-auto ${!canPost ? 'opacity-50' : ''}`}
+                                    onClick={() => handleSchedulePost(post)}
+                                    title="Schedule this post for LinkedIn"
+                                    className="border border-blue-200 text-blue-700 hover:bg-blue-50 px-3 py-1 h-7 text-xs font-medium w-full sm:w-auto"
                                   >
                                     <Clock className="h-3 w-3 mr-1" />
                                     Schedule
                                   </Button>
-                                  {!canPost && showTooltip === post.id && (
-                                    <div className="absolute bottom-full left-0 sm:left-1/2 sm:transform sm:-translate-x-1/2 mb-2 px-3 py-2 bg-primary text-primary-foreground text-xs rounded-lg shadow-lg z-10 animate-in fade-in-0 zoom-in-95 duration-200 whitespace-nowrap">
-                                      Go to Settings <br /> to connect LinkedIn
-                                      <div className="absolute top-full left-4 sm:left-1/2 sm:transform sm:-translate-x-1/2 border-4 border-transparent border-t-primary"></div>
-                                    </div>
-                                  )}
                                 </div>
                               )}
                               {post.status === 'scheduled' && (
@@ -510,84 +531,12 @@ export default function PostsPage() {
             )}
       </main>
 
-      {/* Scheduling Modal */}
-      <Dialog open={!!schedulingPost} onOpenChange={(open) => !open && handleCancelSchedule()}>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle>Schedule Post</DialogTitle>
-            <DialogDescription>
-              Schedule this post to be automatically published on LinkedIn.
-            </DialogDescription>
-          </DialogHeader>
-          <div className="space-y-4">
-            <div>
-              <Label htmlFor="schedule-date">Date</Label>
-              <Input
-                id="schedule-date"
-                type="date"
-                value={scheduleDate}
-                onChange={(e) => setScheduleDate(e.target.value)}
-                min={new Date().toISOString().split('T')[0]}
-                className="mt-1"
-              />
-            </div>
-            <div>
-              <Label htmlFor="schedule-time">Time</Label>
-              <Input
-                id="schedule-time"
-                type="time"
-                value={scheduleTime}
-                onChange={(e) => setScheduleTime(e.target.value)}
-                className="mt-1"
-              />
-            </div>
-            <div>
-              <Label htmlFor="schedule-visibility">Visibility</Label>
-              <Select value={scheduleVisibility} onValueChange={(value: 'PUBLIC' | 'CONNECTIONS') => setScheduleVisibility(value)}>
-                <SelectTrigger className="mt-1">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="PUBLIC">Public</SelectItem>
-                  <SelectItem value="CONNECTIONS">Connections Only</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            {!canPost && (
-              <div className="p-3 bg-yellow-50 border border-yellow-200 rounded-md">
-                <p className="text-sm text-yellow-800">
-                  <strong>LinkedIn not connected.</strong> Please connect your LinkedIn account in Settings to schedule posts.
-                </p>
-              </div>
-            )}
-            <div className="flex justify-end space-x-2">
-              <Button
-                variant="outline"
-                onClick={handleCancelSchedule}
-                disabled={isScheduling}
-              >
-                Cancel
-              </Button>
-              <Button
-                onClick={handleConfirmSchedule}
-                disabled={isScheduling || !canPost}
-                className="bg-blue-600 hover:bg-blue-700"
-              >
-                {isScheduling ? 'Scheduling...' : 'Schedule Post'}
-              </Button>
-            </div>
-          </div>
-        </DialogContent>
-      </Dialog>
 
       {/* Preview Modal */}
       <Dialog open={!!previewPost} onOpenChange={(open) => !open && setPreviewPost(null)}>
-        <DialogContent className="w-[90vw] max-w-md sm:max-w-2xl max-h-[80vh] overflow-y-auto animate-in zoom-in-95 duration-300 mx-auto rounded-3xl">
-          <DialogHeader>
-            <DialogTitle>Post Preview</DialogTitle>
-            <DialogDescription>
-              How your post will appear on LinkedIn
-            </DialogDescription>
+        <DialogContent className="w-[90vw] max-w-sm sm:max-w-lg max-h-[80vh] overflow-y-auto animate-in zoom-in-95 duration-300 mx-auto rounded-3xl">
+          <DialogHeader className="text-center pb-4">
+            <DialogTitle className="text-lg font-serif font-medium text-gray-900">Post Preview</DialogTitle>
           </DialogHeader>
           {previewPost && (
             <div className="space-y-4">
@@ -625,38 +574,166 @@ export default function PostsPage() {
                   )}
                 </div>
               </div>
-              
-              {/* Post details */}
-              <div className="bg-gray-50 rounded-xl p-4">
-                <h4 className="font-semibold text-gray-900 mb-3 text-sm">Post Details</h4>
-                <div className="space-y-3 text-xs">
-                  <div className="flex flex-col gap-1">
-                    <span className="text-gray-600 font-medium">Status:</span>
-                    <div className="flex-shrink-0">{getStatusBadge(previewPost.status)}</div>
-                  </div>
-                  <div className="flex flex-col gap-1">
-                    <span className="text-gray-600 font-medium">Created:</span>
-                    <span className="text-gray-900 break-words">{formatDate(previewPost.created_at)}</span>
-                  </div>
-                  {previewPost.scheduled_at && (
-                    <div className="flex flex-col gap-1">
-                      <span className="text-gray-600 font-medium">Scheduled for:</span>
-                      <span className="text-gray-900 break-words">
-                        {new Date(previewPost.scheduled_at).toLocaleString('en-US', {
-                          timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
-                          year: 'numeric',
-                          month: 'short',
-                          day: 'numeric',
-                          hour: '2-digit',
-                          minute: '2-digit'
-                        })}
-                      </span>
-                    </div>
-                  )}
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Schedule Post Modal */}
+      <Dialog open={!!schedulingPost} onOpenChange={(open) => !open && handleCancelSchedule()}>
+        <DialogContent className="w-[90vw] max-w-md sm:max-w-lg max-h-[80vh] overflow-y-auto animate-in zoom-in-95 duration-300 mx-auto rounded-3xl">
+          <DialogHeader className="text-center pb-6">
+            <DialogTitle className="text-lg font-serif font-medium text-gray-900">Schedule Post</DialogTitle>
+            <DialogDescription className="text-sm text-gray-600">
+              Schedule this post to be automatically published on LinkedIn
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="space-y-6">
+            {/* LinkedIn Connection Status */}
+            <div className="bg-white border border-gray-200 rounded-xl shadow-sm p-4">
+              <div className="flex items-center space-x-3">
+                <div className="w-8 h-8 bg-gradient-to-br from-[#0A66C2] to-[#004182] rounded-full flex items-center justify-center flex-shrink-0">
+                  <svg className="w-4 h-4 text-white" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.413v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/>
+                  </svg>
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-gray-900">LinkedIn Connected</p>
+                  <p className="text-xs text-gray-600">Ready to schedule posts</p>
                 </div>
               </div>
             </div>
-          )}
+
+            {/* Schedule Form */}
+            <div className="space-y-4">
+              <div>
+                <Label htmlFor="schedule-date" className="text-sm font-medium text-gray-700">Schedule Date</Label>
+                <Input
+                  id="schedule-date"
+                  type="date"
+                  value={scheduleDate}
+                  onChange={(e) => setScheduleDate(e.target.value)}
+                  min={new Date().toISOString().split('T')[0]}
+                  className="mt-1 h-11 text-sm border-gray-200 focus:border-[#0A66C2] focus:ring-[#0A66C2]"
+                />
+              </div>
+              <div>
+                <Label htmlFor="schedule-time" className="text-sm font-medium text-gray-700">Schedule Time</Label>
+                <Input
+                  id="schedule-time"
+                  type="time"
+                  value={scheduleTime}
+                  onChange={(e) => setScheduleTime(e.target.value)}
+                  className="mt-1 h-11 text-sm border-gray-200 focus:border-[#0A66C2] focus:ring-[#0A66C2]"
+                />
+              </div>
+              <div>
+                <Label htmlFor="schedule-visibility" className="text-sm font-medium text-gray-700">Post Visibility</Label>
+                <Select value={scheduleVisibility} onValueChange={(value: 'PUBLIC' | 'CONNECTIONS') => setScheduleVisibility(value)}>
+                  <SelectTrigger className="mt-1 h-11 text-sm border-gray-200 focus:border-[#0A66C2] focus:ring-[#0A66C2]">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="PUBLIC">Public</SelectItem>
+                    <SelectItem value="CONNECTIONS">Connections Only</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+
+            {/* Action Buttons */}
+            <div className="flex flex-col gap-3 pt-2">
+              <Button
+                onClick={handleConfirmSchedule}
+                disabled={isScheduling}
+                className="w-full h-11 bg-[#0A66C2] hover:bg-[#0A66C2]/90 text-white text-sm font-medium shadow-sm"
+              >
+                {isScheduling ? (
+                  <>
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                    Scheduling...
+                  </>
+                ) : (
+                  <>
+                    <svg className="w-4 h-4 mr-2" viewBox="0 0 24 24" fill="currentColor">
+                      <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
+                    </svg>
+                    Schedule Post
+                  </>
+                )}
+              </Button>
+              <Button
+                onClick={handleCancelSchedule}
+                variant="outline"
+                className="w-full h-11 text-sm font-medium border-gray-200 hover:bg-gray-50"
+                disabled={isScheduling}
+              >
+                Cancel
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* LinkedIn Connection Modal */}
+      <Dialog open={showLinkedInModal} onOpenChange={(open) => !open && handleLinkedInModalClose()}>
+        <DialogContent className="w-[90vw] max-w-sm max-h-[80vh] overflow-y-auto animate-in zoom-in-95 duration-300 mx-auto rounded-3xl">
+          <DialogHeader className="text-center pb-6">
+            <DialogTitle className="text-lg font-serif font-medium text-gray-900">Connect LinkedIn</DialogTitle>
+            <DialogDescription className="text-sm text-gray-600">
+              Link your account to schedule posts
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="space-y-6">
+            {/* LinkedIn Icon */}
+            <div className="text-center">
+              <div className="w-16 h-16 bg-gradient-to-br from-[#0A66C2] to-[#004182] rounded-full flex items-center justify-center mx-auto shadow-lg">
+                <svg className="w-8 h-8 text-white" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.413v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/>
+                </svg>
+              </div>
+            </div>
+
+            {/* Error Message */}
+            {linkedInError && (
+              <div className="bg-red-50 border border-red-200 rounded-xl p-3">
+                <p className="text-sm text-red-700 text-center">{linkedInError}</p>
+              </div>
+            )}
+
+            {/* Action Buttons */}
+            <div className="flex flex-col gap-3">
+              <Button
+                onClick={handleConnectLinkedIn}
+                disabled={isConnectingLinkedIn}
+                className="w-full h-11 bg-[#0A66C2] hover:bg-[#0A66C2]/90 text-white text-sm font-medium"
+              >
+                {isConnectingLinkedIn ? (
+                  <>
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                    Connecting...
+                  </>
+                ) : (
+                  <>
+                    <svg className="w-4 h-4 mr-2" viewBox="0 0 24 24" fill="currentColor">
+                      <path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.413v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/>
+                    </svg>
+                    Connect LinkedIn
+                  </>
+                )}
+              </Button>
+              <Button
+                onClick={handleLinkedInModalClose}
+                variant="outline"
+                className="w-full h-11 text-sm font-medium"
+                disabled={isConnectingLinkedIn}
+              >
+                Cancel
+              </Button>
+            </div>
+          </div>
         </DialogContent>
       </Dialog>
 
