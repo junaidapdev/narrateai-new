@@ -11,7 +11,7 @@ import Link from "next/link"
 import { useAuth } from "@/lib/hooks/useAuth"
 import { useRecordings } from "@/lib/hooks/useRecordings"
 import { useSubscription } from "@/lib/hooks/useSubscription"
-import { Mic, MicOff, Play, Pause, Square, Trash2, Save } from "lucide-react"
+import { Mic, MicOff, Play, Pause, Square, Trash2, Save, X, RotateCcw } from "lucide-react"
 import { toast } from 'sonner'
 import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
@@ -47,6 +47,9 @@ export default function RecordingPage() {
   // Recent recordings playback states
   const [playingRecordingId, setPlayingRecordingId] = useState<string | null>(null)
   
+  // UI enhancement states
+  const [currentPromptIndex, setCurrentPromptIndex] = useState(0)
+  
   // Refs
   const mediaRecorderRef = useRef<MediaRecorder | null>(null)
   const audioRef = useRef<HTMLAudioElement | null>(null)
@@ -57,6 +60,26 @@ export default function RecordingPage() {
   
   const router = useRouter()
   const supabase = createClient()
+
+  // Example prompts for rotation
+  const examplePrompts = [
+    "💭 Share a recent win...",
+    "💡 Talk about a lesson learned...",
+    "🎯 Describe your expertise...",
+    "🚀 What's your biggest challenge?",
+    "💼 Share a professional insight...",
+    "🌟 What motivates you daily?"
+  ]
+
+  // Rotate prompts every 3 seconds
+  useEffect(() => {
+    if (!isRecording && !audioBlob) {
+      const interval = setInterval(() => {
+        setCurrentPromptIndex((prev) => (prev + 1) % examplePrompts.length)
+      }, 3000)
+      return () => clearInterval(interval)
+    }
+  }, [isRecording, audioBlob, examplePrompts.length])
 
   // Cleanup effects
   useEffect(() => {
@@ -449,15 +472,28 @@ export default function RecordingPage() {
       <main className="mx-auto max-w-7xl px-4 py-6 pb-24 md:px-8 lg:px-12 md:py-12 md:pb-12">
         <div className="max-w-4xl mx-auto">
           {/* Recording Interface */}
-          <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 md:p-12 text-center">
+          <div className="bg-card rounded-2xl border border-border/50 p-6 md:p-12 text-center transition-all hover:border-border hover:shadow-lg animate-scale-in">
+            
             {/* Main Title */}
             <h1 className="text-3xl md:text-5xl lg:text-6xl font-serif font-medium text-foreground mb-4 md:mb-6 leading-tight">
-              Speak<br />your mind
+              {audioBlob ? (
+                <>
+                  Review<br />your recording
+                </>
+              ) : (
+                <>
+                  Speak<br />your mind
+                </>
+              )}
             </h1>
             
             {/* Description */}
             <p className="text-base md:text-lg text-muted-foreground mb-8 md:mb-12 max-w-2xl mx-auto leading-relaxed">
-              Press the button and start talking. We'll transform your thoughts into a polished LinkedIn post.
+              {audioBlob ? (
+                "Listen to your recording and process it into a polished LinkedIn post."
+              ) : (
+                "Press the button and start talking. We'll transform your thoughts into a polished LinkedIn post."
+              )}
             </p>
 
             {/* Recording Timer */}
@@ -500,57 +536,68 @@ export default function RecordingPage() {
                 )}
                 </div>
 
-              {/* Audio Level Visualization */}
+              {/* Rotating Example Prompts */}
+              {!isRecording && !audioBlob && (
+                <div className="mb-8 md:mb-12">
+                  <div className="h-12 flex items-center justify-center">
+                    <div className="text-lg font-medium text-muted-foreground transition-all duration-500 ease-in-out">
+                      {examplePrompts[currentPromptIndex]}
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Animated Waveform During Recording */}
               {isRecording && (
-                <div className="flex justify-center items-end space-x-2 h-16 mb-12">
-                  {Array.from({ length: 15 }, (_, i) => (
+                <div className="flex justify-center items-end space-x-1 h-20 mb-12">
+                  {Array.from({ length: 25 }, (_, i) => (
                     <div
                       key={i}
-                      className="w-1 bg-gray-300 rounded-full transition-all duration-100"
+                      className="w-1 bg-gradient-to-t from-primary to-primary/60 rounded-full transition-all duration-150 ease-in-out"
                       style={{
-                        height: `${Math.max(8, (audioLevel * 100) + Math.random() * 30)}%`,
-                        backgroundColor: '#d1d5db'
+                        height: `${Math.max(8, (audioLevel * 120) + Math.random() * 40 + 20)}%`,
+                        animationDelay: `${i * 0.05}s`
                       }}
                     />
                   ))}
                 </div>
               )}
 
-            {/* Recording Controls - Mobile Optimized */}
+            {/* Recording Controls */}
             <div className="flex justify-center mb-6 md:mb-12">
-              {!isRecording ? (
+              {!isRecording && !audioBlob ? (
                 <Button
                   onClick={startRecording}
-                  className="w-24 h-24 md:w-20 md:h-20 bg-primary hover:bg-primary/90 text-primary-foreground rounded-full flex items-center justify-center shadow-lg hover:shadow-xl transition-all duration-200"
+                  className="w-32 h-32 bg-primary hover:bg-primary/90 text-primary-foreground rounded-full flex items-center justify-center shadow-2xl hover:shadow-3xl transition-all duration-300 hover:scale-105 animate-pulse-glow"
                   size="lg"
                 >
-                  <Mic className="h-10 w-10 md:h-8 md:w-8" />
+                  <Mic className="h-16 w-16" />
                 </Button>
-              ) : (
+              ) : isRecording ? (
                 <div className="flex flex-row items-center gap-8">
                   {/* Pause/Resume Button */}
                   <Button
                     onClick={pauseRecording}
-                    className="w-20 h-20 md:w-16 md:h-16 bg-yellow-500 hover:bg-yellow-600 text-white rounded-full flex items-center justify-center shadow-lg hover:shadow-xl transition-all duration-200"
+                    className="w-20 h-20 bg-yellow-500 hover:bg-yellow-600 text-white rounded-full flex items-center justify-center shadow-lg hover:shadow-xl transition-all duration-200 hover:scale-105"
                     size="lg"
                   >
-                    {isPaused ? <Play className="h-8 w-8 md:h-7 md:w-7" /> : <Pause className="h-8 w-8 md:h-7 md:w-7" />}
+                    {isPaused ? <Play className="h-8 w-8" /> : <Pause className="h-8 w-8" />}
                   </Button>
                   
                   {/* Stop Button */}
                   <Button
                     onClick={stopRecording}
-                    className="w-20 h-20 md:w-16 md:h-16 bg-red-500 hover:bg-red-600 text-white rounded-full flex items-center justify-center shadow-lg hover:shadow-xl transition-all duration-200"
+                    className="w-20 h-20 bg-red-500 hover:bg-red-600 text-white rounded-full flex items-center justify-center shadow-lg hover:shadow-xl transition-all duration-200 hover:scale-105"
                     size="lg"
                   >
-                    <Square className="h-8 w-8 md:h-7 md:w-7" />
+                    <Square className="h-8 w-8" />
                   </Button>
                 </div>
-              )}
+              ) : null}
             </div>
 
             {/* Call to Action */}
-            {!isRecording && (
+            {!isRecording && !audioBlob && (
               <p className="text-sm text-muted-foreground mb-6 md:mb-8">
                 Click to start recording
               </p>
@@ -570,47 +617,76 @@ export default function RecordingPage() {
               </div>
             )}
 
-            {/* Recording Actions */}
+            {/* Completed State - Compact Layout */}
             {audioBlob && (
-              <div className="space-y-6 pt-6 md:pt-8 border-t border-gray-200 pb-6 md:pb-8">
-                {/* Playback Controls */}
-                <div className="flex justify-center items-center space-x-4 mb-6">
-                  <Button
-                    onClick={isPlaying ? pausePlayback : playRecording}
-                    className="bg-primary hover:bg-primary/90 text-primary-foreground px-4 py-2 rounded-lg shadow-sm hover:shadow-md transition-all duration-200"
-                    size="sm"
-                  >
-                    {isPlaying ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />}
-                  </Button>
-                  <Button
-                    onClick={resetRecording}
-                    className="bg-red-50 hover:bg-red-100 text-red-600 border border-red-200 px-4 py-2 rounded-lg shadow-sm hover:shadow-md transition-all duration-200"
-                    size="sm"
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
+              <div className="space-y-6 pt-6 border-t border-border/50">
+
+                {/* Large Waveform Preview */}
+                <div className="flex justify-center items-end space-x-1 h-24 bg-muted/20 rounded-lg p-4 mb-6">
+                  {Array.from({ length: 40 }, (_, i) => (
+                    <div
+                      key={i}
+                      className="w-1 bg-gradient-to-t from-primary/60 to-primary rounded-full transition-all duration-150"
+                      style={{
+                        height: `${Math.random() * 50 + 20}%`
+                      }}
+                    />
+                  ))}
                 </div>
-                
-                {/* Done Button */}
-                <Button 
-                  onClick={saveRecording}
-                  disabled={isProcessing}
-                  className="bg-primary hover:bg-primary/90 text-primary-foreground px-6 py-2 rounded-lg shadow-sm hover:shadow-md transition-all duration-200 font-medium disabled:opacity-50"
-                >
-                  <Save className="h-4 w-4 mr-2" />
-                  <span className="hidden sm:inline">Process Audio</span>
-                  <span className="sm:hidden">Process</span>
-                </Button>
-                
-                {/* Processing Text */}
-                {isProcessing && (
-                  <div className="text-center mt-4">
-                    <p className="text-sm text-muted-foreground font-mono">
-                      {displayText}
-                      <span className="animate-pulse">|</span>
-                    </p>
+
+
+                {/* Action Buttons - Compact Layout */}
+                <div className="space-y-3">
+                  {/* Primary Action Row */}
+                  <div className="flex gap-3">
+                    {/* Process Audio - Primary Button */}
+                    <Button 
+                      onClick={saveRecording}
+                      disabled={isProcessing}
+                      className="flex-1 bg-primary hover:bg-primary/90 text-primary-foreground py-3 rounded-lg shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-[1.02]"
+                      size="lg"
+                    >
+                      {isProcessing ? (
+                        <>
+                          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-primary-foreground mr-2"></div>
+                          Processing...
+                        </>
+                      ) : (
+                        <>
+                          <Save className="h-4 w-4 mr-2" />
+                          Process Audio
+                        </>
+                      )}
+                    </Button>
+                    
+                    {/* Preview Recording Button */}
+                    <Button
+                      onClick={isPlaying ? pausePlayback : playRecording}
+                      variant="outline"
+                      className="px-4 border-border hover:bg-accent transition-all duration-200 hover:scale-[1.02]"
+                      size="lg"
+                    >
+                      {isPlaying ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />}
+                    </Button>
                   </div>
-                )}
+                  
+                  {/* Secondary Actions */}
+                  <div className="flex justify-between items-center">
+                    <Button
+                      onClick={resetRecording}
+                      variant="ghost"
+                      size="sm"
+                      className="text-muted-foreground hover:text-foreground transition-all duration-200"
+                    >
+                      <RotateCcw className="h-4 w-4 mr-2" />
+                      Record Again
+                    </Button>
+                    
+                    <div className="text-xs text-muted-foreground">
+                      {formatTime(recordingTime)} recorded
+                    </div>
+                  </div>
+                </div>
               </div>
             )}
 

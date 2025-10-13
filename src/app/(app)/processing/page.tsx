@@ -8,7 +8,7 @@ import { useAuth } from "@/lib/hooks/useAuth"
 import { useRecordings } from "@/lib/hooks/useRecordings"
 import { usePosts } from "@/lib/hooks/usePosts"
 import { formatDate } from "@/lib/utils"
-import { Mic, FileText, CheckCircle, Loader2, ArrowRight } from "lucide-react"
+import { Mic, FileText, CheckCircle, Loader2, ArrowRight, Sparkles, Zap } from "lucide-react"
 import { toast } from 'sonner'
 import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
@@ -28,6 +28,9 @@ export default function ProcessingPage() {
   const [currentRecording, setCurrentRecording] = useState<any>(null)
   const [hasProcessed, setHasProcessed] = useState(false)
   const [userContext, setUserContext] = useState<{ linkedinGoal?: string; backStory?: string } | null>(null)
+  const [showConfetti, setShowConfetti] = useState(false)
+  const [continuousProgress, setContinuousProgress] = useState(0)
+  const [showShimmer, setShowShimmer] = useState(false)
   const router = useRouter()
   const supabase = createClient()
 
@@ -91,6 +94,19 @@ export default function ProcessingPage() {
 
   const startProcessing = async (recording: any) => {
     try {
+      // Start continuous progress animation
+      setContinuousProgress(0)
+      setShowShimmer(true)
+      const progressInterval = setInterval(() => {
+        setContinuousProgress(prev => {
+          if (prev >= 100) {
+            clearInterval(progressInterval)
+            return 100
+          }
+          return prev + 0.5 // Increase by 0.5% every 50ms for smooth animation
+        })
+      }, 50)
+
       // Step 1: Transcribing Audio
       setProcessingStep(0)
       toast.info('Starting transcription...')
@@ -151,17 +167,31 @@ export default function ProcessingPage() {
       // Step 4: Complete
       setProcessingStep(3)
       setIsProcessing(false)
+      setContinuousProgress(100) // Ensure it reaches 100%
+      setShowConfetti(true)
+      
+      // Hide shimmer and show content after a brief delay
+      setTimeout(() => {
+        setShowShimmer(false)
+      }, 500)
+      
       toast.success('Post created successfully!')
       
-      // Auto-redirect to posts after 2 seconds
+      // Hide confetti after 2 seconds
+      setTimeout(() => {
+        setShowConfetti(false)
+      }, 2000)
+      
+      // Auto-redirect to posts after 3 seconds
       setTimeout(() => {
         router.push('/posts')
-      }, 2000)
+      }, 3000)
       
     } catch (error) {
       console.error('Processing error:', error)
       toast.error(`Failed to process recording: ${error instanceof Error ? error.message : 'Unknown error'}`)
       setIsProcessing(false)
+      setContinuousProgress(0) // Reset progress on error
     }
   }
 
@@ -227,128 +257,143 @@ export default function ProcessingPage() {
       <DashboardHeader />
 
       {/* Main Content */}
-      <main className="mx-auto max-w-7xl px-6 py-12 md:px-8 lg:px-12">
-        {/* Main Title and Subtitle */}
-        <div className="text-center mb-12">
-          <h1 className="text-3xl font-serif font-bold tracking-tight text-foreground md:text-4xl mb-4">
-            Processing Your Recording
-          </h1>
-          <p className="text-lg text-muted-foreground">
-            We're transcribing your audio and generating your post content.
-          </p>
-        </div>
-
-        <div className="max-w-6xl mx-auto">
-          {/* Processing Status - Single Card */}
-          <div className="max-w-md mx-auto mb-12">
-            <div className="bg-white rounded-xl border border-border shadow-sm p-8 text-center">
-              {/* Progress Indicator */}
-              <div className="flex justify-center mb-6">
-                {processingStep >= steps.length - 1 ? (
-                  <div className="w-12 h-12 bg-green-500 rounded-full flex items-center justify-center">
-                    <CheckCircle className="h-6 w-6 text-white" />
-                  </div>
-                ) : (
-                  <div className="w-12 h-12 bg-primary rounded-full flex items-center justify-center">
-                    <Loader2 className="h-6 w-6 text-white animate-spin" />
-                  </div>
-                )}
-              </div>
-              
-              {/* Current Step */}
-              <div className="mb-4">
-                <h3 className="text-xl font-bold text-foreground mb-2">
-                  {steps[processingStep]?.title || 'Processing Complete'}
-                </h3>
-                <p className="text-muted-foreground">
-                  {steps[processingStep]?.description || 'Your post is ready!'}
-                </p>
-              </div>
-              
-              {/* Step Counter */}
-              <div className="flex items-center justify-center space-x-2">
-                <span className="text-sm text-muted-foreground">Step {processingStep + 1} of {steps.length}</span>
-                <div className="flex space-x-1">
-                  {steps.map((_, index) => (
-                    <div
-                      key={index}
-                      className={`w-2 h-2 rounded-full ${
-                        index <= processingStep ? 'bg-primary' : 'bg-muted'
-                      }`}
-                    />
-                  ))}
+      <main className="mx-auto max-w-4xl px-6 py-8 md:px-8 lg:px-12">
+        {/* Minimal Processing Status */}
+        <div className="max-w-lg mx-auto mb-8">
+          <div className="bg-card rounded-2xl border border-border/50 p-6 text-center transition-all hover:border-border hover:shadow-lg animate-scale-in">
+            {/* Simple Progress Indicator */}
+            <div className="flex justify-center mb-4">
+              {processingStep >= steps.length - 1 ? (
+                <div className="w-12 h-12 bg-green-500 rounded-full flex items-center justify-center animate-bounce">
+                  <CheckCircle className="h-6 w-6 text-white" />
                 </div>
+              ) : (
+                <div className="w-12 h-12 bg-primary rounded-full flex items-center justify-center">
+                  <Loader2 className="h-6 w-6 text-white animate-spin" />
+                </div>
+              )}
+            </div>
+            
+            {/* Minimal Step Info */}
+            <div className="mb-4">
+              <h3 className={`text-lg font-semibold mb-1 ${
+                processingStep >= steps.length - 1 ? 'text-green-600' : 'text-foreground'
+              }`}>
+                {processingStep >= steps.length - 1 ? 'Complete' : steps[processingStep]?.title}
+              </h3>
+              <p className="text-sm text-muted-foreground">
+                {processingStep >= steps.length - 1 ? 'Your post is ready!' : steps[processingStep]?.description}
+              </p>
+              {processingStep === 0 && (
+                <p className="text-xs text-muted-foreground mt-1">
+                  This usually takes 10-15 seconds
+                </p>
+              )}
+            </div>
+            
+            {/* Progress Bar with Continuous Percentage */}
+            <div className="space-y-2">
+              <div className="w-full bg-muted rounded-full h-2">
+                <div 
+                  className="bg-primary h-2 rounded-full transition-all duration-100 ease-out"
+                  style={{ width: `${continuousProgress}%` }}
+                />
+              </div>
+              <div className="flex justify-between items-center text-xs text-muted-foreground">
+                <span>Step {processingStep + 1} of {steps.length}</span>
+                <span>{Math.round(continuousProgress)}%</span>
               </div>
             </div>
           </div>
+        </div>
 
-          {/* Results */}
-          {transcription && (
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-              {/* Transcription */}
-              <div className="bg-white rounded-xl border border-border shadow-sm p-6">
-                <div className="flex items-center mb-4">
-                  <div className="w-8 h-8 bg-muted rounded-lg flex items-center justify-center mr-3">
-                    <FileText className="h-5 w-5 text-muted-foreground" />
-                  </div>
-                  <div>
-                    <h3 className="font-bold text-foreground">Transcription</h3>
-                    <p className="text-sm text-muted-foreground">Your speech converted to text</p>
-                  </div>
-                </div>
-                <div className="bg-muted/50 p-4 rounded-lg">
-                  <p className="text-foreground">{transcription}</p>
+        {/* Shimmer Effect - Shows during processing */}
+        {showShimmer && (
+          <div className="bg-card rounded-2xl border border-border/50 p-6 animate-scale-in">
+            <div className="space-y-4">
+              {/* Shimmer Header */}
+              <div className="flex items-center space-x-3">
+                <div className="w-8 h-8 bg-muted rounded-lg shimmer"></div>
+                <div className="space-y-2">
+                  <div className="h-4 bg-muted rounded w-32 shimmer"></div>
+                  <div className="h-3 bg-muted rounded w-24 shimmer"></div>
                 </div>
               </div>
+              
+              {/* Shimmer Content Lines */}
+              <div className="space-y-3">
+                <div className="h-4 bg-muted rounded w-full shimmer"></div>
+                <div className="h-4 bg-muted rounded w-4/5 shimmer"></div>
+                <div className="h-4 bg-muted rounded w-3/4 shimmer"></div>
+                <div className="h-4 bg-muted rounded w-5/6 shimmer"></div>
+                <div className="h-4 bg-muted rounded w-2/3 shimmer"></div>
+                <div className="h-4 bg-muted rounded w-4/5 shimmer"></div>
+              </div>
+            </div>
+          </div>
+        )}
 
-              {/* Generated Post */}
-              {generatedPost && (
-                <div className="bg-white rounded-xl border border-border shadow-sm p-6">
-                  <div className="flex items-center justify-between mb-4">
-                    <div className="flex items-center">
-                      <div className="w-8 h-8 bg-green-100 rounded-lg flex items-center justify-center mr-3">
-                        <FileText className="h-5 w-5 text-green-600" />
-                      </div>
-                      <div>
-                        <h3 className="font-bold text-foreground">Generated Post</h3>
-                        <p className="text-sm text-muted-foreground">Your content ready for publishing</p>
-                      </div>
+        {/* Minimal Results */}
+        {transcription && !showShimmer && (
+          <div className="space-y-6 animate-fade-in">
+            {/* Generated Post - Main Focus */}
+            {generatedPost && (
+              <div className="bg-card rounded-2xl border border-border/50 p-6 transition-all hover:border-border hover:shadow-lg animate-scale-in">
+                <div className="flex items-center justify-between mb-4">
+                  <div className="flex items-center">
+                    <div className="w-8 h-8 bg-accent/50 rounded-lg flex items-center justify-center mr-3">
+                      <FileText className="h-5 w-5 text-accent-foreground" />
                     </div>
-                    <Button
-                      onClick={() => {
-                        navigator.clipboard.writeText(generatedPost)
-                        toast.success('Post copied to clipboard!')
-                      }}
-                      variant="outline"
-                      size="sm"
-                      className="flex items-center border-border hover:bg-muted"
-                    >
-                      <FileText className="h-4 w-4 mr-2" />
-                      Copy
-                    </Button>
+                    <div>
+                      <h3 className="font-semibold text-foreground">Generated Post</h3>
+                      <p className="text-sm text-muted-foreground">Ready for publishing</p>
+                    </div>
                   </div>
-                  <div className="bg-muted/50 p-4 rounded-lg max-h-64 overflow-y-auto">
-                    <p className="text-foreground whitespace-pre-wrap">{generatedPost}</p>
-                  </div>
-                </div>
-              )}
-
-              {/* Action Button */}
-              {!isProcessing && (
-                <div className="lg:col-span-2 text-center mt-8">
                   <Button
-                    onClick={handleViewPosts}
-                    className="bg-primary hover:bg-primary/90 text-primary-foreground px-8 py-3 rounded-lg"
-                    size="lg"
+                    onClick={() => {
+                      navigator.clipboard.writeText(generatedPost)
+                      toast.success('Post copied to clipboard!')
+                    }}
+                    variant="outline"
+                    size="sm"
+                    className="flex items-center border-border hover:bg-muted"
                   >
-                    <ArrowRight className="h-5 w-5 mr-2" />
-                    View Your Posts
+                    <FileText className="h-4 w-4 mr-2" />
+                    Copy
                   </Button>
                 </div>
-              )}
-            </div>
-          )}
-        </div>
+                <div className="bg-muted/50 p-4 rounded-lg">
+                  <p className="text-foreground whitespace-pre-wrap leading-relaxed">{generatedPost}</p>
+                </div>
+              </div>
+            )}
+
+            {/* Action Button */}
+            {!isProcessing && (
+              <div className="text-center">
+                <Button
+                  onClick={handleViewPosts}
+                  className="bg-primary hover:bg-primary/90 text-primary-foreground px-6 py-3 rounded-lg"
+                  size="lg"
+                >
+                  <ArrowRight className="h-5 w-5 mr-2" />
+                  View Your Posts
+                </Button>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Confetti Animation */}
+        {showConfetti && (
+          <div className="fixed inset-0 pointer-events-none z-50">
+            <div className="absolute top-1/4 left-1/4 w-2 h-2 bg-green-500 rounded-full animate-bounce"></div>
+            <div className="absolute top-1/3 left-1/3 w-2 h-2 bg-blue-500 rounded-full animate-bounce" style={{animationDelay: '0.2s'}}></div>
+            <div className="absolute top-1/2 left-1/2 w-2 h-2 bg-yellow-500 rounded-full animate-bounce" style={{animationDelay: '0.4s'}}></div>
+            <div className="absolute top-2/3 right-1/3 w-2 h-2 bg-red-500 rounded-full animate-bounce" style={{animationDelay: '0.6s'}}></div>
+            <div className="absolute top-3/4 right-1/4 w-2 h-2 bg-purple-500 rounded-full animate-bounce" style={{animationDelay: '0.8s'}}></div>
+          </div>
+        )}
       </main>
 
       {/* Mobile Bottom Navigation */}
