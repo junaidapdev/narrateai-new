@@ -175,19 +175,21 @@ export default function DashboardPage() {
       <main className="mx-auto max-w-7xl px-6 py-8 md:px-8 lg:px-12">
 
 
-        {/* Account Status */}
-        <div className="mb-12">
-          <AccountStatus
-            minutesUsed={trialUsage?.minutes_used}
-            minutesLimit={trialUsage?.minutes_limit}
-            isTrial={trialUsage?.is_trial}
-            canRecord={trialUsage?.can_record}
-            subscriptionStatus={subscription?.subscription_status}
-            subscriptionPlan={subscription?.subscription_plan}
-            subscriptionEndDate={subscription?.subscription_end_date}
-            onUpgrade={() => router.push('/pricing')}
-          />
-        </div>
+        {/* Account Status - Only show for trial users */}
+        {subscription?.subscription_status === 'trial' && (
+          <div className="mb-12">
+            <AccountStatus
+              minutesUsed={trialUsage?.minutes_used}
+              minutesLimit={trialUsage?.minutes_limit}
+              isTrial={trialUsage?.is_trial}
+              canRecord={trialUsage?.can_record}
+              subscriptionStatus={subscription?.subscription_status}
+              subscriptionPlan={subscription?.subscription_plan}
+              subscriptionEndDate={subscription?.subscription_end_date}
+              onUpgrade={() => router.push('/pricing')}
+            />
+          </div>
+        )}
 
         {/* Stats Grid */}
         <div className="mb-12">

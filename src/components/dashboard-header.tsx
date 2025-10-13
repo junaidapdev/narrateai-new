@@ -1,9 +1,10 @@
 "use client"
 
 import { Button } from "@/components/ui/button"
-import { Settings, User, Mic, LogOut } from "lucide-react"
+import { Settings, User, Mic, LogOut, Crown } from "lucide-react"
 import Link from "next/link"
 import { useAuth } from "@/lib/hooks/useAuth"
+import { useSubscription } from "@/lib/hooks/useSubscription"
 import { createClient } from '@/lib/supabase/client'
 import { useRouter, usePathname } from 'next/navigation'
 import { toast } from 'sonner'
@@ -11,6 +12,7 @@ import { useState, useEffect, useRef } from 'react'
 
 export function DashboardHeader() {
   const { user } = useAuth()
+  const { subscription } = useSubscription()
   const router = useRouter()
   const pathname = usePathname()
   const supabase = createClient()
@@ -119,8 +121,12 @@ export function DashboardHeader() {
                 className="rounded-full"
                 onClick={() => setShowUserMenu(!showUserMenu)}
               >
-                <div className="flex h-8 w-8 items-center justify-center rounded-full bg-accent text-accent-foreground text-sm font-medium">
+                <div className="relative flex h-8 w-8 items-center justify-center rounded-full bg-accent text-accent-foreground text-sm font-medium">
                   {user ? getUserInitials(user.user_metadata?.full_name || '', user.email || '') : 'U'}
+                  {/* Crown icon for Pro members */}
+                  {subscription?.subscription_status === 'active' && (
+                    <Crown className="absolute -top-1 -right-1 h-4 w-4 text-yellow-500 fill-yellow-500" />
+                  )}
                 </div>
               </Button>
               
@@ -129,13 +135,24 @@ export function DashboardHeader() {
                 <div className="absolute right-0 top-12 w-64 rounded-lg border border-border/50 bg-card shadow-lg animate-scale-in">
                   <div className="p-4 border-b border-border/50">
                     <div className="flex items-center gap-3">
-                      <div className="flex h-10 w-10 items-center justify-center rounded-full bg-accent text-accent-foreground text-sm font-medium">
+                      <div className="relative flex h-10 w-10 items-center justify-center rounded-full bg-accent text-accent-foreground text-sm font-medium">
                         {user ? getUserInitials(user.user_metadata?.full_name || '', user.email || '') : 'U'}
+                        {/* Crown icon for Pro members in dropdown */}
+                        {subscription?.subscription_status === 'active' && (
+                          <Crown className="absolute -top-1 -right-1 h-4 w-4 text-yellow-500 fill-yellow-500" />
+                        )}
                       </div>
                       <div className="flex-1 min-w-0">
-                        <p className="font-medium text-foreground truncate">
-                          {user?.user_metadata?.full_name || 'User'}
-                        </p>
+                        <div className="flex items-center gap-2">
+                          <p className="font-medium text-foreground truncate">
+                            {user?.user_metadata?.full_name || 'User'}
+                          </p>
+                          {subscription?.subscription_status === 'active' && (
+                            <span className="text-xs bg-yellow-100 text-yellow-800 px-2 py-1 rounded-full font-medium">
+                              Pro
+                            </span>
+                          )}
+                        </div>
                         <p className="text-sm text-muted-foreground truncate">
                           {user?.email}
                         </p>
