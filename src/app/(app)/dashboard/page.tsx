@@ -33,7 +33,7 @@ export default function DashboardPage() {
   // Welcome modal state
   const [showWelcomeModal, setShowWelcomeModal] = useState(false)
 
-  // Fetch onboarding status
+  // Fetch onboarding status and check banner dismissal
   useEffect(() => {
     const fetchOnboardingStatus = async () => {
       if (!user) return
@@ -51,6 +51,12 @@ export default function DashboardPage() {
         }
 
         setOnboardingDone(data?.onboarding_done || false)
+        
+        // Check if user has dismissed the banner
+        const bannerDismissed = localStorage.getItem(`narrate_banner_dismissed_${user.id}`)
+        if (bannerDismissed === 'true') {
+          setShowBanner(false)
+        }
       } catch (error) {
         console.error('Error:', error)
       }
@@ -161,7 +167,13 @@ export default function DashboardPage() {
                 <Button
                   variant="ghost"
                   size="sm"
-                  onClick={() => setShowBanner(false)}
+                  onClick={() => {
+                    setShowBanner(false)
+                    // Store banner dismissal in localStorage
+                    if (user?.id) {
+                      localStorage.setItem(`narrate_banner_dismissed_${user.id}`, 'true')
+                    }
+                  }}
                   className="text-yellow-600 hover:text-yellow-700 hover:bg-yellow-100"
                 >
                   <X className="h-4 w-4" />
