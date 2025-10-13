@@ -117,7 +117,7 @@ export default function Home() {
               </div>
             </div>
             <p className="mt-4 text-sm text-muted-foreground">
-              Join 12,000+ founders who've ditched the blank cursor
+              Join founders who've ditched the blank cursor
             </p>
           </div>
         </div>
