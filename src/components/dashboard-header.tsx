@@ -80,7 +80,7 @@ export function DashboardHeader() {
                   : 'text-muted-foreground'
               }`}
             >
-              Recordings
+              Record
             </Link>
             <Link
               href="/posts"

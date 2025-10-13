@@ -497,8 +497,8 @@ export default function RecordingPage() {
             </p>
 
             {/* Recording Timer */}
-            <div className="text-center mb-8 md:mb-12">
-              <div className="text-2xl md:text-4xl lg:text-5xl font-mono font-bold text-foreground mb-3 md:mb-4">
+            <div className="text-center mb-4 md:mb-6">
+              <div className="text-4xl md:text-5xl lg:text-6xl font-mono font-bold text-foreground mb-2">
                 {formatTime(recordingTime)}
               </div>
               {isRecording && (
@@ -547,19 +547,21 @@ export default function RecordingPage() {
                 </div>
               )}
 
-              {/* Animated Waveform During Recording */}
+              {/* Professional Waveform During Recording */}
               {isRecording && (
-                <div className="flex justify-center items-end space-x-1 h-20 mb-12">
-                  {Array.from({ length: 25 }, (_, i) => (
-                    <div
-                      key={i}
-                      className="w-1 bg-gradient-to-t from-primary to-primary/60 rounded-full transition-all duration-150 ease-in-out"
-                      style={{
-                        height: `${Math.max(8, (audioLevel * 120) + Math.random() * 40 + 20)}%`,
-                        animationDelay: `${i * 0.05}s`
-                      }}
-                    />
-                  ))}
+                <div className="bg-card border border-border/30 rounded-2xl p-6 mb-12 shadow-sm">
+                  <div className="flex justify-center items-end space-x-1 h-20">
+                    {Array.from({ length: 50 }, (_, i) => (
+                      <div
+                        key={i}
+                        className="w-1 bg-gradient-to-t from-primary/40 via-primary/70 to-primary rounded-full transition-all duration-300 hover:scale-110"
+                        style={{
+                          height: `${Math.max(8, (audioLevel * 120) + Math.random() * 40 + 20)}%`,
+                          animationDelay: `${i * 0.02}s`
+                        }}
+                      />
+                    ))}
+                  </div>
                 </div>
               )}
 
@@ -568,29 +570,29 @@ export default function RecordingPage() {
               {!isRecording && !audioBlob ? (
                 <Button
                   onClick={startRecording}
-                  className="w-32 h-32 bg-primary hover:bg-primary/90 text-primary-foreground rounded-full flex items-center justify-center shadow-2xl hover:shadow-3xl transition-all duration-300 hover:scale-105 animate-pulse-glow"
+                  className="w-24 h-24 md:w-32 md:h-32 bg-primary hover:bg-primary/90 text-primary-foreground rounded-full flex items-center justify-center shadow-2xl hover:shadow-3xl transition-all duration-300 hover:scale-105 animate-pulse-glow"
                   size="lg"
                 >
-                  <Mic className="h-16 w-16" />
+                  <Mic className="h-12 w-12 md:h-16 md:w-16" />
                 </Button>
               ) : isRecording ? (
-                <div className="flex flex-row items-center gap-8">
+                <div className="flex flex-row items-center gap-6 md:gap-8">
                   {/* Pause/Resume Button */}
                   <Button
                     onClick={pauseRecording}
-                    className="w-20 h-20 bg-yellow-500 hover:bg-yellow-600 text-white rounded-full flex items-center justify-center shadow-lg hover:shadow-xl transition-all duration-200 hover:scale-105"
+                    className="w-16 h-16 md:w-20 md:h-20 bg-yellow-500 hover:bg-yellow-600 text-white rounded-full flex items-center justify-center shadow-lg hover:shadow-xl transition-all duration-200 hover:scale-105"
                     size="lg"
                   >
-                    {isPaused ? <Play className="h-8 w-8" /> : <Pause className="h-8 w-8" />}
+                    {isPaused ? <Play className="h-6 w-6 md:h-8 md:w-8" /> : <Pause className="h-6 w-6 md:h-8 md:w-8" />}
                   </Button>
                   
                   {/* Stop Button */}
                   <Button
                     onClick={stopRecording}
-                    className="w-20 h-20 bg-red-500 hover:bg-red-600 text-white rounded-full flex items-center justify-center shadow-lg hover:shadow-xl transition-all duration-200 hover:scale-105"
+                    className="w-16 h-16 md:w-20 md:h-20 bg-red-500 hover:bg-red-600 text-white rounded-full flex items-center justify-center shadow-lg hover:shadow-xl transition-all duration-200 hover:scale-105"
                     size="lg"
                   >
-                    <Square className="h-8 w-8" />
+                    <Square className="h-6 w-6 md:h-8 md:w-8" />
                   </Button>
                 </div>
               ) : null}
@@ -619,19 +621,22 @@ export default function RecordingPage() {
 
             {/* Completed State - Compact Layout */}
             {audioBlob && (
-              <div className="space-y-6 pt-6 border-t border-border/50">
+              <div className="space-y-4 pt-2">
 
-                {/* Large Waveform Preview */}
-                <div className="flex justify-center items-end space-x-1 h-24 bg-muted/20 rounded-lg p-4 mb-6">
-                  {Array.from({ length: 40 }, (_, i) => (
-                    <div
-                      key={i}
-                      className="w-1 bg-gradient-to-t from-primary/60 to-primary rounded-full transition-all duration-150"
-                      style={{
-                        height: `${Math.random() * 50 + 20}%`
-                      }}
-                    />
-                  ))}
+                {/* Professional Waveform Preview */}
+                <div className="bg-card border border-border/30 rounded-2xl p-6 mb-6 shadow-sm">
+                  <div className="flex justify-center items-end space-x-1 h-20">
+                    {Array.from({ length: 50 }, (_, i) => (
+                      <div
+                        key={i}
+                        className="w-1 bg-gradient-to-t from-primary/40 via-primary/70 to-primary rounded-full transition-all duration-300 hover:scale-110"
+                        style={{
+                          height: `${Math.random() * 60 + 15}%`,
+                          animationDelay: `${i * 0.02}s`
+                        }}
+                      />
+                    ))}
+                  </div>
                 </div>
 
 
@@ -663,10 +668,10 @@ export default function RecordingPage() {
                     <Button
                       onClick={isPlaying ? pausePlayback : playRecording}
                       variant="outline"
-                      className="px-4 border-border hover:bg-accent transition-all duration-200 hover:scale-[1.02]"
+                      className="px-3 md:px-4 border-border hover:bg-accent transition-all duration-200 hover:scale-[1.02]"
                       size="lg"
                     >
-                      {isPlaying ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />}
+                      {isPlaying ? <Pause className="h-3 w-3 md:h-4 md:w-4" /> : <Play className="h-3 w-3 md:h-4 md:w-4" />}
                     </Button>
                   </div>
                   
@@ -682,8 +687,11 @@ export default function RecordingPage() {
                       Record Again
                     </Button>
                     
-                    <div className="text-xs text-muted-foreground">
-                      {formatTime(recordingTime)} recorded
+                    <div className="flex items-center space-x-2">
+                      <div className="w-2 h-2 bg-primary rounded-full animate-pulse"></div>
+                      <div className="text-sm font-medium text-foreground">
+                        {formatTime(recordingTime)} recorded
+                      </div>
                     </div>
                   </div>
                 </div>

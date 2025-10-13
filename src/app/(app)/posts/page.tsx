@@ -187,8 +187,7 @@ export default function PostsPage() {
 
   const handleSchedulePost = (post: any) => {
     if (!canPost) {
-      // Show LinkedIn connection modal instead of tooltip
-      setSchedulingPost(post.id)
+      // Show LinkedIn connection modal instead of schedule modal
       setShowLinkedInModal(true)
       setLinkedInError(null)
       return
