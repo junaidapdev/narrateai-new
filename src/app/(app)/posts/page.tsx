@@ -24,7 +24,7 @@ import { DashboardHeader } from '@/components/dashboard-header'
 
 export default function PostsPage() {
   const { user, loading: authLoading } = useAuth()
-  const { posts, loading: postsLoading, createPost, updatePost, deletePost, publishPost } = usePosts()
+  const { posts, loading: postsLoading, createPost, updatePost, deletePost, publishPost, schedulePost, fetchPosts } = usePosts()
   const { connection: linkedinConnection, loading: linkedinLoading } = useLinkedIn()
   const { postToLinkedIn, canPost } = useLinkedInPosting()
   const [editingPost, setEditingPost] = useState<string | null>(null)
@@ -48,6 +48,51 @@ export default function PostsPage() {
   
   const router = useRouter()
   const supabase = createClient()
+
+  // Helper function to format scheduled time in local timezone
+  const formatScheduledTime = (scheduledAt: string) => {
+    try {
+      // The database stores UTC time but might not have 'Z' suffix
+      // We need to ensure it's treated as UTC
+      let utcDate: Date
+      
+      if (scheduledAt.includes('Z') || scheduledAt.includes('+') || scheduledAt.includes('-')) {
+        // Already has timezone info
+        utcDate = new Date(scheduledAt)
+      } else {
+        // No timezone info - assume it's UTC and add Z
+        utcDate = new Date(scheduledAt + 'Z')
+      }
+      
+      // Convert UTC to local timezone
+      const localTime = utcDate.toLocaleString('en-US', {
+        timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+        hour12: true
+      })
+      
+      // Debug logging
+      console.log('Date conversion debug:', {
+        original: scheduledAt,
+        hasTimezone: scheduledAt.includes('Z') || scheduledAt.includes('+') || scheduledAt.includes('-'),
+        withZ: scheduledAt + 'Z',
+        utcDate: utcDate.toISOString(),
+        localTime,
+        timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+        utcTime: utcDate.toUTCString(),
+        localTimeString: utcDate.toLocaleString()
+      })
+      
+      return localTime
+    } catch (error) {
+      console.error('Error formatting scheduled time:', error)
+      return 'Invalid date'
+    }
+  }
 
   const handleSignOut = async () => {
     try {
@@ -244,7 +289,17 @@ export default function PostsPage() {
       const localScheduledDateTime = new Date(localDate.getFullYear(), localDate.getMonth(), localDate.getDate(), hours, minutes)
       
       // Convert to UTC for storage (database stores in UTC)
+      // Simply use toISOString() which should work correctly
       const utcScheduledTime = localScheduledDateTime.toISOString()
+      
+      // Ensure the time is properly formatted as UTC
+      console.log('UTC conversion check:', {
+        localScheduledDateTime: localScheduledDateTime.toString(),
+        utcScheduledTime,
+        isUTC: localScheduledDateTime.toISOString(),
+        timezoneOffset: localScheduledDateTime.getTimezoneOffset(),
+        manualUTC: utcScheduledTime
+      })
       
       // Debug logging
       console.log('Scheduling Debug:', {
@@ -256,10 +311,11 @@ export default function PostsPage() {
       })
       
       // Update the post status to scheduled
-      await updatePost(schedulingPost, {
-        status: 'scheduled',
-        scheduled_at: utcScheduledTime
-      })
+      console.log('Scheduling post:', schedulingPost, 'at:', utcScheduledTime)
+      
+      const updateResult = await schedulePost(schedulingPost, utcScheduledTime)
+      
+      console.log('Post schedule result:', updateResult)
 
       // Create scheduled post entry
       const { error: scheduledPostError } = await supabase
@@ -288,6 +344,10 @@ export default function PostsPage() {
       })
       
       toast.success(`Post scheduled for ${localTimeString}`)
+      
+      // Refresh posts to show updated status
+      await fetchPosts()
+      
       handleCancelSchedule()
     } catch (error) {
       console.error('Scheduling error:', error)
@@ -507,15 +567,8 @@ export default function PostsPage() {
                               {post.status === 'scheduled' && (
                                 <div className="flex items-center text-xs text-blue-600 bg-blue-50 px-2 py-1 rounded w-full sm:w-auto">
                                   <Calendar className="h-3 w-3 mr-1" />
-                                  <span className="truncate">
-                                    {post.scheduled_at && new Date(post.scheduled_at).toLocaleString('en-US', {
-                                      timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
-                                      year: 'numeric',
-                                      month: 'short',
-                                      day: 'numeric',
-                                      hour: '2-digit',
-                                      minute: '2-digit'
-                                    })}
+                                  <span className="truncate" key={`scheduled-${post.id}-${post.scheduled_at}`}>
+                                    {post.scheduled_at && formatScheduledTime(post.scheduled_at)}
                                   </span>
                                 </div>
                               )}

@@ -6,6 +6,7 @@ import { useAuth } from "@/lib/hooks/useAuth"
 import { useRouter } from "next/navigation"
 import { useEffect } from "react"
 import { Mic, Check, ArrowRight, Star, Users, Zap, Play, Shield, Clock } from "lucide-react"
+import DemoSection from "@/components/demo/DemoSection"
 
 export default function Home() {
   const { user, loading } = useAuth()
@@ -122,6 +123,9 @@ export default function Home() {
           </div>
         </div>
       </section>
+
+      {/* Interactive Demo Section */}
+      <DemoSection />
 
       {/* Demo Section */}
       <section id="how-it-works" className="py-24 sm:py-32">

@@ -67,6 +67,8 @@ export function usePosts() {
 
   const updatePost = async (id: string, updates: Partial<Post>) => {
     try {
+      console.log('updatePost called with:', { id, updates })
+      
       const { data, error } = await supabase
         .from('posts')
         .update(updates)
@@ -75,8 +77,11 @@ export function usePosts() {
         .single()
 
       if (error) {
+        console.error('Database update error:', error)
         throw error
       }
+
+      console.log('Database update successful:', data)
 
       setPosts(prev => 
         prev.map(post => 
@@ -85,6 +90,7 @@ export function usePosts() {
       )
       return data
     } catch (err) {
+      console.error('updatePost error:', err)
       setError(err instanceof Error ? err.message : 'An error occurred')
       throw err
     }
@@ -119,6 +125,13 @@ export function usePosts() {
     return updatePost(id, { status: 'archived' })
   }
 
+  const schedulePost = async (id: string, scheduledAt: string) => {
+    return updatePost(id, { 
+      status: 'scheduled',
+      scheduled_at: scheduledAt
+    })
+  }
+
   useEffect(() => {
     fetchPosts()
   }, [])
@@ -133,6 +146,7 @@ export function usePosts() {
     deletePost,
     publishPost,
     archivePost,
+    schedulePost,
   }
 }
 

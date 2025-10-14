@@ -50,7 +50,7 @@ const nextConfig: NextConfig = {
               "img-src 'self' data: https: blob:",
               "font-src 'self' data:",
               "connect-src 'self' https://*.supabase.co https://*.lemonsqueezy.com https://api.openai.com https://api.assemblyai.com https://api.linkedin.com",
-              "media-src 'self' blob:",
+              "media-src 'self' blob: data:",
               "object-src 'none'",
               "base-uri 'self'",
               "form-action 'self'",

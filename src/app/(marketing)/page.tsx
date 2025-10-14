@@ -1,5 +1,6 @@
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
+import DemoSection from "@/components/demo/DemoSection"
 
 export default function LandingPage() {
   return (
@@ -31,11 +32,13 @@ export default function LandingPage() {
         <p className="text-lg md:text-xl text-gray-600 mb-8 max-w-2xl mx-auto">
           Turn rambling voice notes into viral LinkedIn posts. Just talk for 30 seconds. AI does the rest.
         </p>
-        <Link href="/signup">
-          <Button className="bg-primary hover:bg-primary/90 text-white text-base px-6 py-4 rounded-lg mb-4 transition-all hover:scale-[0.98]">
-            Start Talking, Stop Typing →
-          </Button>
-        </Link>
+        <div className="flex flex-col sm:flex-row gap-4 justify-center items-center mb-4">
+          <Link href="/signup">
+            <Button className="bg-primary hover:bg-primary/90 text-white text-base px-6 py-4 rounded-lg transition-all hover:scale-[0.98]">
+              Start Talking, Stop Typing →
+            </Button>
+          </Link>
+        </div>
         <p className="text-sm text-gray-600">
           Join 12,000+ founders who've ditched the blank cursor
         </p>
@@ -69,6 +72,9 @@ export default function LandingPage() {
           </div>
         </div>
       </section>
+
+      {/* Demo Section */}
+      <DemoSection />
 
       {/* How It Works Section */}
       <section className="max-w-6xl mx-auto px-4 py-16">
